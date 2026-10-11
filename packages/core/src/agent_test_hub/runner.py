@@ -41,6 +41,7 @@ class EvaluationRunner:
         examiner: BaseExaminer,
         rubrics: list[BinaryRubric],
         testee_agent_fn: Callable[[str, ExecutionTrace], dict[str, Any]],
+        event_callback: Callable[[TraceEvent], None] | None = None,
     ) -> TaskEvaluationResult:
         """执行单任务完整动态评测闭环
 
@@ -49,7 +50,17 @@ class EvaluationRunner:
             examiner: 考官智能体 (如状态化用户模拟官)
             rubrics: 美团二元检查项列表
             testee_agent_fn: 被测 Agent 执行函数，接收 (user_prompt, trace)，返回 {'response': str, 'tool_calls': [...]}
+            event_callback: 可选的事件流实时监听回调，用于 WebSocket 或 SSE 实时推流
         """
+
+        def emit(event: TraceEvent) -> None:
+            trace.events.append(event)
+            if event_callback:
+                try:
+                    event_callback(event)
+                except Exception:
+                    pass
+
         # 1. 记录沙盒初始物理快照
         snap_initial = self.sandbox.snapshot()
         trace = ExecutionTrace(task_id=task.task_id)
@@ -63,7 +74,7 @@ class EvaluationRunner:
             action = examiner.act(trace, turn)
 
             # 记录考官发言事件
-            trace.events.append(
+            emit(
                 TraceEvent(
                     turn_index=turn,
                     actor_role=ActorRole.USER_SIMULATOR,
@@ -82,7 +93,7 @@ class EvaluationRunner:
             tool_calls_req = agent_output.get("tool_calls", [])
 
             # 记录 Agent 思考或发言
-            trace.events.append(
+            emit(
                 TraceEvent(
                     turn_index=turn,
                     actor_role=ActorRole.TESTEE_AGENT,
@@ -101,7 +112,7 @@ class EvaluationRunner:
                 duration = (datetime.datetime.now() - start_t).total_seconds() * 1000.0
 
                 is_err = sandbox_res.get("status") == "error"
-                trace.events.append(
+                emit(
                     TraceEvent(
                         turn_index=turn,
                         actor_role=ActorRole.TESTEE_AGENT,

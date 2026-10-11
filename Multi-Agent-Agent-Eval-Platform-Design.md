@@ -228,32 +228,21 @@ COLLABORATION_PROTOCOL = {
         "task_builder": {
             "system_prompt": "你是一个专业的测试用例生成专家...",
             "output_format": "json",
-            "tools": ["generate_task", "validate_task"]
+            "tools": ["generate_task", "validate_task"],
         },
-        "executor": {
-            "system_prompt": "你是一个 Agent 执行环境...",
-            "timeout": 300,
-            "retry": 2
-        },
+        "executor": {"system_prompt": "你是一个 Agent 执行环境...", "timeout": 300, "retry": 2},
         "judge": {
             "system_prompt": "你是一个严格的评测裁判...",
-            "criteria": ["correctness", "efficiency", "safety"]
+            "criteria": ["correctness", "efficiency", "safety"],
         },
-        "analyzer": {
-            "system_prompt": "你是一个数据分析专家...",
-            "output_format": "markdown"
-        }
+        "analyzer": {"system_prompt": "你是一个数据分析专家...", "output_format": "markdown"},
     },
     "topology": {
         "type": "sequential",  # sequential / parallel / tree / graph
-        "edges": [
-            ("task_builder", "executor"),
-            ("executor", "judge"),
-            ("judge", "analyzer")
-        ]
+        "edges": [("task_builder", "executor"), ("executor", "judge"), ("judge", "analyzer")],
     },
     "iterations": 1,  # 支持多轮迭代优化
-    "feedback_mode": "direct"  # direct / with_reason / with_correction
+    "feedback_mode": "direct",  # direct / with_reason / with_correction
 }
 ```
 
@@ -275,6 +264,7 @@ class Topology(Enum):
     TREE = "tree"
     GRAPH = "graph"
     DEBATE = "debate"
+
 
 class AgentCommunication:
     def __init__(self, topology: Topology):
@@ -308,12 +298,7 @@ class MetricPlugin(ABC):
         self.version = "1.0.0"
 
     @abstractmethod
-    def compute(
-        self,
-        scenario: Scenario,
-        output: Dict[str, Any],
-        trace: Trace
-    ) -> MetricResult:
+    def compute(self, scenario: Scenario, output: Dict[str, Any], trace: Trace) -> MetricResult:
         """计算指标值"""
         pass
 
@@ -328,22 +313,19 @@ class MetricPlugin(ABC):
             "name": self.name,
             "version": self.version,
             "description": self.__doc__,
-            "dimensions": self.dimensions
+            "dimensions": self.dimensions,
         }
+
 
 # 评判插件基类
 class JudgePlugin(ABC):
     """评判器基类"""
 
     @abstractmethod
-    def judge(
-        self,
-        task: Task,
-        output: Any,
-        criteria: List[Criterion]
-    ) -> JudgmentResult:
+    def judge(self, task: Task, output: Any, criteria: List[Criterion]) -> JudgmentResult:
         """执行评判"""
         pass
+
 
 # 场景插件基类
 class ScenarioPlugin(ABC):
@@ -430,14 +412,15 @@ class ToolCallingMetric(MetricPlugin):
             "precision": self._calc_precision(scenario, tool_calls),
             "recall": self._calc_recall(scenario, tool_calls),
             "param_accuracy": self._calc_param_accuracy(tool_calls),
-            "recovery": self._calc_recovery_rate(trace)
+            "recovery": self._calc_recovery_rate(trace),
         }
 
         return MetricResult(
             dimension="tool_calling",
             scores=results,
-            weight={"precision": 0.3, "recall": 0.3, "param_accuracy": 0.2, "recovery": 0.2}
+            weight={"precision": 0.3, "recall": 0.3, "param_accuracy": 0.2, "recovery": 0.2},
         )
+
 
 # MCP 使用指标
 class MCPUsageMetric(MetricPlugin):
@@ -450,10 +433,11 @@ class MCPUsageMetric(MetricPlugin):
             "protocol_compliance": self._check_protocol(mcp_calls),
             "tool_chain_execution": self._eval_tool_chain(mcp_calls),
             "state_management": self._check_state_handling(mcp_calls),
-            "error_handling": self._eval_error_handling(mcp_calls)
+            "error_handling": self._eval_error_handling(mcp_calls),
         }
 
         return MetricResult(dimension="mcp_usage", scores=results)
+
 
 # 协作能力指标
 class CollaborationMetric(MetricPlugin):
@@ -465,7 +449,7 @@ class CollaborationMetric(MetricPlugin):
             "info_propagation": self._eval_info_flow(trace),
             "consensus_achievement": self._eval_consensus(trace),
             "context_isolation": self._eval_context_leak(trace),  # 参考 AgentCollabBench CLC
-            "constraint_maintenance": self._eval_constraint(trace)  # 参考 AgentCollabBench IDR
+            "constraint_maintenance": self._eval_constraint(trace),  # 参考 AgentCollabBench IDR
         }
 
         return MetricResult(dimension="collaboration", scores=results)
@@ -584,8 +568,7 @@ class LLMJudge(JudgePlugin):
         prompt = self._build_judge_prompt(task, output, context)
 
         response = self.provider.generate(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}]
+            model=self.model, messages=[{"role": "user", "content": prompt}]
         )
 
         parsed = self._parse_response(response)
@@ -593,7 +576,7 @@ class LLMJudge(JudgePlugin):
         return JudgmentResult(
             scores={c.name: parsed[c.name] for c in self.criteria},
             feedback=parsed.get("feedback"),
-            suggestions=parsed.get("suggestions")
+            suggestions=parsed.get("suggestions"),
         )
 
     def _build_judge_prompt(self, task, output, context) -> str:
@@ -653,6 +636,7 @@ class AgentAdapter(ABC):
     def get_available_tools(self) -> List[Tool]:
         """获取可用工具列表"""
         pass
+
 
 # MCP 适配器示例
 class MCPAdapter(AgentAdapter):
@@ -777,10 +761,11 @@ ITERATION_CONFIG = {
     "max_iterations": 3,
     "stop_condition": {
         "score_threshold": 0.9,  # 达到 90% 即可停止
-        "no_improvement": 2     # 连续 2 轮无提升则停止
+        "no_improvement": 2,  # 连续 2 轮无提升则停止
     },
-    "feedback_mode": "with_correction"  # Judge 给出修正建议
+    "feedback_mode": "with_correction",  # Judge 给出修正建议
 }
+
 
 # 迭代流程
 def iterative_evaluation(task, agent):
@@ -811,13 +796,7 @@ def iterative_evaluation(task, agent):
 ### 5.1 Python SDK
 
 ```python
-from agent_eval_platform import (
-    Platform,
-    Scenario,
-    Metric,
-    AgentAdapter,
-    JudgeConfig
-)
+from agent_eval_platform import Platform, Scenario, Metric, AgentAdapter, JudgeConfig
 
 # 初始化平台
 platform = Platform()
@@ -827,8 +806,7 @@ scenario = platform.load_scenario("code_review")
 
 # 配置被测 Agent
 agent = platform.register_agent(
-    adapter=AgentAdapter.AutoGen,
-    config={"model": "gpt-4", "tools": [...]}
+    adapter=AgentAdapter.AutoGen, config={"model": "gpt-4", "tools": [...]}
 )
 
 # 配置评测指标
@@ -836,23 +814,17 @@ metrics = [
     Metric.tool_calling(weight=0.3),
     Metric.mcp_usage(weight=0.2),
     Metric.collaboration(weight=0.3),
-    Metric.safety(weight=0.2)
+    Metric.safety(weight=0.2),
 ]
 
 # 配置评判器
 judge = JudgeConfig.llm_judge(
-    provider="openai",
-    model="gpt-4",
-    criteria=["correctness", "efficiency", "safety"]
+    provider="openai", model="gpt-4", criteria=["correctness", "efficiency", "safety"]
 )
 
 # 执行评测
 result = platform.evaluate(
-    scenario=scenario,
-    agent=agent,
-    metrics=metrics,
-    judge=judge,
-    iterations=1
+    scenario=scenario, agent=agent, metrics=metrics, judge=judge, iterations=1
 )
 
 # 获取报告
