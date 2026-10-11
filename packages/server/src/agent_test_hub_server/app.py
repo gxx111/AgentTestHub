@@ -19,7 +19,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# 允许跨域，方便未来的 Next.js 15 (如 http://localhost:3000) 随时接入
+# 允许跨域，方便未来的 Next.js 15 (如 http://localhost:3005) 随时接入
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

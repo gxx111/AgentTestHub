@@ -110,8 +110,8 @@ chmod +x run_dev.sh
 ./run_dev.sh
 ```
 
-- 🌐 **Web 竞技场大屏**：[http://localhost:3000](http://localhost:3000)
-- 🔌 **FastAPI 接口文档**：[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- 🌐 **Web 竞技场大屏**：[http://localhost:3005](http://localhost:3005)
+- 🔌 **FastAPI 接口文档**：[http://127.0.0.1:8005/docs](http://127.0.0.1:8005/docs)
 
 ---
 

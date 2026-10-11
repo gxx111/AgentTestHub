@@ -41,7 +41,7 @@ export function Header({ onRunEval, isRunning }: HeaderProps) {
           <span className="h-3 w-px bg-white/10" />
           <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-pulse">
             <span className="w-2 h-2 rounded-full bg-emerald-pulse animate-ping" />
-            <span>FastAPI: 8000 在线</span>
+            <span>FastAPI: 8005 在线</span>
           </div>
         </div>
 

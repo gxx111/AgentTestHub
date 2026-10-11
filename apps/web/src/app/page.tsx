@@ -16,7 +16,7 @@ export default function ArenaDashboardPage() {
     setIsRunning(true);
     try {
       // 尝试调用本地 FastAPI 后端
-      const res = await fetch("http://localhost:8000/api/v1/evaluations/run", {
+      const res = await fetch("http://localhost:8005/api/v1/evaluations/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ benchmark_id: "ecommerce_refund" }),
