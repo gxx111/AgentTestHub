@@ -5,10 +5,19 @@ import { Play, Sparkles, Github, Terminal, CheckCircle2, RefreshCw } from "lucid
 
 interface HeaderProps {
   onRunEval: () => void;
+  onOpenSettings: () => void;
+  onExportReport: () => void;
   isRunning: boolean;
+  agentModelName?: string;
 }
 
-export function Header({ onRunEval, isRunning }: HeaderProps) {
+export function Header({
+  onRunEval,
+  onOpenSettings,
+  onExportReport,
+  isRunning,
+  agentModelName = "自适应 Agent",
+}: HeaderProps) {
   return (
     <header className="w-full glass-panel border-b border-white/10 sticky top-0 z-50 px-6 py-3.5 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -46,7 +55,27 @@ export function Header({ onRunEval, isRunning }: HeaderProps) {
         </div>
 
         {/* 右侧：操作按钮与 GitHub 外链 */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Agent 配置抽屉入口 */}
+          <button
+            onClick={onOpenSettings}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card text-xs text-slate-300 hover:text-white font-mono transition-colors"
+            title="配置被测 Agent 来源 (大模型/Webhook)"
+          >
+            <span className="w-2 h-2 rounded-full bg-cyber-azure" />
+            <span>Agent: {agentModelName}</span>
+          </button>
+
+          {/* 导出报告按钮 */}
+          <button
+            onClick={onExportReport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass-card text-xs text-slate-300 hover:text-cyber-cyan font-mono transition-colors"
+            title="一键导出企业级自包含 HTML 评测报告"
+          >
+            <span>导出报告</span>
+          </button>
+
+          {/* 启动评测主按钮 */}
           <button
             onClick={onRunEval}
             disabled={isRunning}
