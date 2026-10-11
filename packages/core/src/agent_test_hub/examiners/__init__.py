@@ -1,6 +1,6 @@
 from .base import BaseExaminer, ExaminerAction
-from .user_simulator import UserSimulator
 from .red_team import RedTeamAttacker
+from .user_simulator import UserSimulator
 
 __all__ = [
     "BaseExaminer",

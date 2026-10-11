@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from typing import Any
+
 import networkx as nx
-from agent_test_hub.schemas import ExecutionTrace, ActorRole, TraceEventType
+from agent_test_hub.schemas import ExecutionTrace, TraceEventType
+
 from ..base import BaseMetric, MetricResult
 
 
@@ -15,9 +17,20 @@ class CommunicationSNRMetric(BaseMetric):
     def __init__(self, min_valid_ratio: float = 0.65):
         self.min_valid_ratio = min_valid_ratio
         # 常见冗余闲聊词表
-        self.chatter_keywords = ["收到", "好的", "没问题", "辛苦", "roger that", "got it", "acknowledged", "thanks"]
+        self.chatter_keywords = [
+            "收到",
+            "好的",
+            "没问题",
+            "辛苦",
+            "roger that",
+            "got it",
+            "acknowledged",
+            "thanks",
+        ]
 
-    def evaluate(self, trace: ExecutionTrace, context: dict[str, Any] | None = None) -> MetricResult:
+    def evaluate(
+        self, trace: ExecutionTrace, context: dict[str, Any] | None = None
+    ) -> MetricResult:
         messages = [
             e.content.strip().lower()
             for e in trace.events
@@ -47,7 +60,11 @@ class CommunicationSNRMetric(BaseMetric):
             dimension=self.dimension,
             score=round(snr, 4),
             is_passed=is_passed,
-            details={"total_messages": len(messages), "chatter_messages": chatter_count, "snr": snr},
+            details={
+                "total_messages": len(messages),
+                "chatter_messages": chatter_count,
+                "snr": snr,
+            },
             rationale=f"团队通信信噪比为 {snr:.1%} (冗余寒暄消息占比 {chatter_count}/{len(messages)})",
         )
 
@@ -61,7 +78,9 @@ class MASDeadlockDetectorMetric(BaseMetric):
     def __init__(self, min_cycle_weight: int = 2):
         self.min_cycle_weight = min_cycle_weight
 
-    def evaluate(self, trace: ExecutionTrace, context: dict[str, Any] | None = None) -> MetricResult:
+    def evaluate(
+        self, trace: ExecutionTrace, context: dict[str, Any] | None = None
+    ) -> MetricResult:
         # 构建 Agent 间消息交互依赖图 (有向图 DiGraph)
         g = nx.DiGraph()
 
@@ -103,5 +122,7 @@ class MASDeadlockDetectorMetric(BaseMetric):
             score=score,
             is_passed=not has_deadlock,
             details={"deadlock_cycles": deadlock_cycles},
-            rationale=f"检测到智能体团队存在互相等待死锁环: {deadlock_cycles}" if has_deadlock else "未发生级联通信死锁",
+            rationale=f"检测到智能体团队存在互相等待死锁环: {deadlock_cycles}"
+            if has_deadlock
+            else "未发生级联通信死锁",
         )

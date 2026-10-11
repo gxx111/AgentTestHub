@@ -1,6 +1,5 @@
-import pytest
-from agent_test_hub.schemas import ExecutionTrace, TraceEvent, ActorRole, TraceEventType
-from agent_test_hub.examiners import UserSimulator, RedTeamAttacker
+from agent_test_hub.examiners import RedTeamAttacker, UserSimulator
+from agent_test_hub.schemas import ActorRole, ExecutionTrace, TraceEvent, TraceEventType
 
 
 def test_user_simulator_hidden_goal_fsm():

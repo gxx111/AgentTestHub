@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class FaultSpec(BaseModel):
     """注入的系统或工具故障规格"""
+
     model_config = ConfigDict(frozen=True)
 
     fault_type: str = Field(description="故障类型: delay / http_error / malformed_json / exception")
@@ -19,6 +21,7 @@ class FaultSpec(BaseModel):
 
 class StateSnapshot(BaseModel):
     """沙盒环境某一时间点的物理状态快照"""
+
     model_config = ConfigDict(frozen=True)
 
     snapshot_id: str = Field(description="快照唯一标识")
@@ -33,6 +36,7 @@ class StateSnapshot(BaseModel):
 
 class StateDelta(BaseModel):
     """环境初态与终态之间的客观物理差异"""
+
     model_config = ConfigDict(frozen=True)
 
     is_changed: bool = Field(description="是否存在物理变更")

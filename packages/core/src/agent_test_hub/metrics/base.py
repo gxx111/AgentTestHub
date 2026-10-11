@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+
 from agent_test_hub.schemas import ExecutionTrace
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MetricResult(BaseModel):
     """单项评测指标的统一输出契约"""
+
     model_config = ConfigDict(frozen=True)
 
     metric_name: str = Field(description="指标唯一英文标识")
@@ -25,6 +27,8 @@ class BaseMetric(ABC):
     dimension: str = "general"
 
     @abstractmethod
-    def evaluate(self, trace: ExecutionTrace, context: dict[str, Any] | None = None) -> MetricResult:
+    def evaluate(
+        self, trace: ExecutionTrace, context: dict[str, Any] | None = None
+    ) -> MetricResult:
         """从执行日志与上下文计算指标分值"""
         pass

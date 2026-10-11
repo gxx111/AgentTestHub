@@ -1,11 +1,15 @@
-import pytest
-from agent_test_hub.schemas import ExecutionTrace, TraceEvent, ActorRole, TraceEventType, ToolCallObservation
 from agent_test_hub.metrics import (
-    ToolArgumentASTMetric,
-    FaultRecoveryMetric,
-    LivelockDetectionMetric,
     CommunicationSNRMetric,
+    FaultRecoveryMetric,
     MASDeadlockDetectorMetric,
+    ToolArgumentASTMetric,
+)
+from agent_test_hub.schemas import (
+    ActorRole,
+    ExecutionTrace,
+    ToolCallObservation,
+    TraceEvent,
+    TraceEventType,
 )
 
 
@@ -132,11 +136,36 @@ def test_mas_communication_snr_and_deadlock():
     trace_deadlock = ExecutionTrace(
         task_id="mas_deadlock",
         events=[
-            TraceEvent(actor_role=ActorRole.TESTEE_AGENT, actor_name="A", event_type=TraceEventType.AGENT_MESSAGE, content="等你输出"),
-            TraceEvent(actor_role=ActorRole.TESTEE_AGENT, actor_name="B", event_type=TraceEventType.AGENT_MESSAGE, content="等你输出"),
-            TraceEvent(actor_role=ActorRole.TESTEE_AGENT, actor_name="A", event_type=TraceEventType.AGENT_MESSAGE, content="等你输出"),
-            TraceEvent(actor_role=ActorRole.TESTEE_AGENT, actor_name="B", event_type=TraceEventType.AGENT_MESSAGE, content="等你输出"),
-            TraceEvent(actor_role=ActorRole.TESTEE_AGENT, actor_name="A", event_type=TraceEventType.AGENT_MESSAGE, content="等你输出"),
+            TraceEvent(
+                actor_role=ActorRole.TESTEE_AGENT,
+                actor_name="A",
+                event_type=TraceEventType.AGENT_MESSAGE,
+                content="等你输出",
+            ),
+            TraceEvent(
+                actor_role=ActorRole.TESTEE_AGENT,
+                actor_name="B",
+                event_type=TraceEventType.AGENT_MESSAGE,
+                content="等你输出",
+            ),
+            TraceEvent(
+                actor_role=ActorRole.TESTEE_AGENT,
+                actor_name="A",
+                event_type=TraceEventType.AGENT_MESSAGE,
+                content="等你输出",
+            ),
+            TraceEvent(
+                actor_role=ActorRole.TESTEE_AGENT,
+                actor_name="B",
+                event_type=TraceEventType.AGENT_MESSAGE,
+                content="等你输出",
+            ),
+            TraceEvent(
+                actor_role=ActorRole.TESTEE_AGENT,
+                actor_name="A",
+                event_type=TraceEventType.AGENT_MESSAGE,
+                content="等你输出",
+            ),
         ],
     )
     res_deadlock = deadlock_metric.evaluate(trace_deadlock)

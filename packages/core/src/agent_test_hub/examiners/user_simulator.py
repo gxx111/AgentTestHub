@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
 from agent_test_hub.schemas import ExecutionTrace, TraceEventType
+
 from .base import BaseExaminer, ExaminerAction
 
 
 class UserSimulator(BaseExaminer):
     """状态化用户模拟官 (Stateful User Simulator with Hidden Goal FSM)
-    
+
     不同于死板的单句 Prompt，模拟真实用户：
     1. 拥有不可见的隐藏诉求 (Hidden Goal)；
     2. 根据被测 Agent 的提问状态机，分阶段释放意图 (Information Phasing)；

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+
 from agent_test_hub.schemas import (
     BinaryRubric,
-    BinaryVerdict,
     ExecutionTrace,
     RubricJudgment,
 )

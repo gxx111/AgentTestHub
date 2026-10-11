@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
 from agent_test_hub.schemas import (
     AttributionNode,
     BinaryVerdict,
@@ -12,7 +11,7 @@ from agent_test_hub.schemas import (
 
 class CausalAttributionEngine:
     """阿里 7-Hop 故障因果归因树引擎 (Causal Root-Cause Attribution Engine)
-    
+
     在测试用例未通过时，沿着 7-Hop 执行拓扑逆向回溯，定位最根本诱因并输出针对性行动建议：
     Hop1/2: 意图与规划阶段失效 ➔ 建议补充负向提示词
     Hop4:   参数 AST 校验失败   ➔ 建议修正参数类型定义或增强模型输出格式强转

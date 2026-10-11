@@ -4,20 +4,23 @@ import uuid
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class ActorRole(str, Enum):
     """参与交互的实体角色定义"""
-    USER_SIMULATOR = "user_simulator"       # 考官: 状态化用户模拟官
-    RED_TEAM_ATTACKER = "red_team_attacker" # 考官: 对抗攻防红队官
-    TESTEE_AGENT = "testee_agent"           # 被测主体 Agent
-    WATCHDOG = "watchdog"                   # 考官: 环境监考与故障注入官
-    TOOL_SANDBOX = "tool_sandbox"           # 沙盒工具执行器
+
+    USER_SIMULATOR = "user_simulator"  # 考官: 状态化用户模拟官
+    RED_TEAM_ATTACKER = "red_team_attacker"  # 考官: 对抗攻防红队官
+    TESTEE_AGENT = "testee_agent"  # 被测主体 Agent
+    WATCHDOG = "watchdog"  # 考官: 环境监考与故障注入官
+    TOOL_SANDBOX = "tool_sandbox"  # 沙盒工具执行器
 
 
 class TraceEventType(str, Enum):
     """OpenInference 语义事件流类型"""
+
     USER_MESSAGE = "user_message"
     AGENT_THOUGHT = "agent_thought"
     AGENT_MESSAGE = "agent_message"
@@ -29,6 +32,7 @@ class TraceEventType(str, Enum):
 
 class ToolCallObservation(BaseModel):
     """工具调用的输入、输出与耗时详细观测数据"""
+
     model_config = ConfigDict(frozen=True)
 
     tool_name: str = Field(description="调用的工具名")
@@ -40,6 +44,7 @@ class ToolCallObservation(BaseModel):
 
 class TraceEvent(BaseModel):
     """不可变结构化执行事件 (OpenInference 语义单元)"""
+
     model_config = ConfigDict(frozen=True)
 
     event_id: str = Field(
@@ -56,13 +61,13 @@ class TraceEvent(BaseModel):
     actor_role: ActorRole = Field(description="产生该事件的角色")
     actor_name: str = Field(default="system", description="角色名称")
     event_type: TraceEventType = Field(description="事件类型")
-    
+
     # 消息内容与载荷
     content: str = Field(default="", description="文本消息或思考链内容")
     tool_observation: ToolCallObservation | None = Field(
         default=None, description="工具调用观测数据"
     )
-    
+
     # 资源消耗记录
     tokens_consumed: int = Field(default=0, ge=0, description="本事件消耗的 Token 数")
     cost_usd: float = Field(default=0.0, ge=0.0, description="费用开销估算")
@@ -71,6 +76,7 @@ class TraceEvent(BaseModel):
 
 class ExecutionTrace(BaseModel):
     """单任务全生命周期执行轨迹集合"""
+
     model_config = ConfigDict(frozen=True)
 
     task_id: str = Field(description="关联的任务 ID")
@@ -89,8 +95,4 @@ class ExecutionTrace(BaseModel):
 
     def get_tool_calls(self) -> list[ToolCallObservation]:
         """提取所有工具调用观测记录"""
-        return [
-            e.tool_observation
-            for e in self.events
-            if e.tool_observation is not None
-        ]
+        return [e.tool_observation for e in self.events if e.tool_observation is not None]

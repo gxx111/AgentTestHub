@@ -1,8 +1,8 @@
 from .base import BaseJudge
 from .committee import (
+    JudicialCommittee,
     RuleJudge,
     SafetyJudge,
-    JudicialCommittee,
 )
 
 __all__ = [

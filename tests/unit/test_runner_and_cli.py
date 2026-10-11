@@ -1,22 +1,23 @@
-import pytest
-from agent_test_hub.schemas import (
-    TaskSpec,
-    WorldStateExpectation,
-    BinaryRubric,
-    BinaryVerdict,
-)
 from agent_test_hub.examiners import UserSimulator
 from agent_test_hub.runner import EvaluationRunner
+from agent_test_hub.schemas import (
+    BinaryRubric,
+    BinaryVerdict,
+    TaskSpec,
+    WorldStateExpectation,
+)
 from agent_test_hub_sandbox import SQLiteSandbox
 
 
 def test_evaluation_runner_full_cycle():
     """测试评测总线调度考官网络、被测 Agent、沙盒与陪审团的闭环"""
     sandbox = SQLiteSandbox()
-    sandbox.initialize([
-        "CREATE TABLE orders (order_id TEXT PRIMARY KEY, status TEXT);",
-        "INSERT INTO orders VALUES ('ORD_1001', 'PAID');",
-    ])
+    sandbox.initialize(
+        [
+            "CREATE TABLE orders (order_id TEXT PRIMARY KEY, status TEXT);",
+            "INSERT INTO orders VALUES ('ORD_1001', 'PAID');",
+        ]
+    )
 
     task = TaskSpec(
         task_id="t_runner_test",

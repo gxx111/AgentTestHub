@@ -32,7 +32,9 @@ class SQLiteSandbox(BaseSandbox):
     def snapshot(self) -> StateSnapshot:
         """遍历所有用户数据表生成不可变深拷贝快照"""
         cursor = self._conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
+        )
         tables = [row["name"] for row in cursor.fetchall()]
 
         tables_data: dict[str, list[dict[str, Any]]] = {}
@@ -52,7 +54,9 @@ class SQLiteSandbox(BaseSandbox):
         """将当前数据库完全回滚至快照状态"""
         cursor = self._conn.cursor()
         # 清空当前所有表数据
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';"
+        )
         current_tables = [row["name"] for row in cursor.fetchall()]
 
         for table in current_tables:
@@ -86,12 +90,14 @@ class SQLiteSandbox(BaseSandbox):
                     modified.append({"table": table, "action": "INSERT", "record": f_row})
                 elif f_row != init_rows[pk]:
                     is_changed = True
-                    modified.append({
-                        "table": table,
-                        "action": "UPDATE",
-                        "old": init_rows[pk],
-                        "new": f_row,
-                    })
+                    modified.append(
+                        {
+                            "table": table,
+                            "action": "UPDATE",
+                            "old": init_rows[pk],
+                            "new": f_row,
+                        }
+                    )
 
             for pk, i_row in init_rows.items():
                 if pk not in final_rows:
@@ -120,7 +126,7 @@ class SQLiteSandbox(BaseSandbox):
                         "message": rule.error_message,
                     }
                 elif rule.fault_type == "malformed_json":
-                    return {"status": "error", "raw": "{\"corrupted_json\": [unclosed"}
+                    return {"status": "error", "raw": '{"corrupted_json": [unclosed'}
                 elif rule.fault_type == "exception":
                     raise RuntimeError(f"Injected Sandbox Exception: {rule.error_message}")
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
-from agent_test_hub.schemas import ExecutionTrace, TraceEventType
+
+from agent_test_hub.schemas import ExecutionTrace
+
 from ..base import BaseMetric, MetricResult
 
 
@@ -11,7 +13,9 @@ class FaultRecoveryMetric(BaseMetric):
     name: str = "hop5_fault_recovery"
     dimension: str = "Hop5_Fault_Tolerance"
 
-    def evaluate(self, trace: ExecutionTrace, context: dict[str, Any] | None = None) -> MetricResult:
+    def evaluate(
+        self, trace: ExecutionTrace, context: dict[str, Any] | None = None
+    ) -> MetricResult:
         tool_calls = trace.get_tool_calls()
         if not tool_calls:
             return MetricResult(
@@ -60,7 +64,9 @@ class LivelockDetectionMetric(BaseMetric):
     def __init__(self, max_consecutive_duplicates: int = 3):
         self.max_duplicates = max_consecutive_duplicates
 
-    def evaluate(self, trace: ExecutionTrace, context: dict[str, Any] | None = None) -> MetricResult:
+    def evaluate(
+        self, trace: ExecutionTrace, context: dict[str, Any] | None = None
+    ) -> MetricResult:
         tool_calls = trace.get_tool_calls()
         if len(tool_calls) < self.max_duplicates:
             return MetricResult(
@@ -91,5 +97,7 @@ class LivelockDetectionMetric(BaseMetric):
             score=score,
             is_passed=not has_livelock,
             details={"max_consecutive_repeated_calls": max_seen},
-            rationale=f"检测到重复调用 {max_seen} 次相同的参数，判定为行为死循环" if has_livelock else "未检测到重复行为活锁",
+            rationale=f"检测到重复调用 {max_seen} 次相同的参数，判定为行为死循环"
+            if has_livelock
+            else "未检测到重复行为活锁",
         )

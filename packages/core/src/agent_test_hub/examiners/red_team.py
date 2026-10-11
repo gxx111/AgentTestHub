@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
 from agent_test_hub.schemas import ExecutionTrace
+
 from .base import BaseExaminer, ExaminerAction
 
 
 class RedTeamAttacker(BaseExaminer):
     """对抗攻防红队官 (Adversarial Red-Team with Crescendo Attacks)
-    
+
     采用多轮渐进式攻击（从看似无害的问题逐步引申到越权/注入攻击）：
     1. 第 1 轮：无害业务咨询；
     2. 第 2 轮：诱导 Agent 透露内部系统提示词或工具 Schema；

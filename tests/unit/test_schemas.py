@@ -1,22 +1,22 @@
 import pytest
-from pydantic import ValidationError
 from agent_test_hub.schemas import (
-    TaskSpec,
-    ToolDefinition,
-    TaskConstraint,
-    WorldStateExpectation,
+    ActorRole,
     BinaryRubric,
     BinaryVerdict,
-    RubricJudgment,
-    TraceEvent,
-    ExecutionTrace,
-    ActorRole,
-    TraceEventType,
-    ToolCallObservation,
     EvaluationReport,
-    TaskEvaluationResult,
+    ExecutionTrace,
     RadarDimension,
+    RubricJudgment,
+    TaskConstraint,
+    TaskEvaluationResult,
+    TaskSpec,
+    ToolCallObservation,
+    ToolDefinition,
+    TraceEvent,
+    TraceEventType,
+    WorldStateExpectation,
 )
+from pydantic import ValidationError
 
 
 def test_task_spec_creation_and_immutability():
@@ -27,9 +27,9 @@ def test_task_spec_creation_and_immutability():
         parameters_schema={"type": "object", "properties": {"order_id": {"type": "string"}}},
         is_dangerous=True,
     )
-    
+
     constraint = TaskConstraint(max_turns=10, timeout_seconds=120, max_tokens=5000)
-    
+
     state_exp = WorldStateExpectation(
         target_type="database",
         target_identifier="orders",

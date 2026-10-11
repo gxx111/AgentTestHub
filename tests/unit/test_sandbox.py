@@ -1,5 +1,4 @@
-import pytest
-from agent_test_hub_sandbox import SQLiteSandbox, FaultSpec
+from agent_test_hub_sandbox import FaultSpec, SQLiteSandbox
 
 
 def test_sqlite_sandbox_snapshot_and_diff():
@@ -24,7 +23,10 @@ def test_sqlite_sandbox_snapshot_and_diff():
     # 2. Agent 模拟执行工具修改数据库状态
     res = sandbox.execute_tool(
         "db_execute",
-        {"sql": "UPDATE orders SET status = ? WHERE order_id = ?", "params": ["CANCELLED", "ORD_1001"]},
+        {
+            "sql": "UPDATE orders SET status = ? WHERE order_id = ?",
+            "params": ["CANCELLED", "ORD_1001"],
+        },
     )
     assert res["status"] == "success"
     assert res["rows_affected"] == 1

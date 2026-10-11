@@ -1,14 +1,13 @@
-import pytest
+from agent_test_hub.judges import JudicialCommittee, RuleJudge, SafetyJudge
 from agent_test_hub.schemas import (
+    ActorRole,
     BinaryRubric,
     BinaryVerdict,
     ExecutionTrace,
-    TraceEvent,
-    ActorRole,
-    TraceEventType,
     ToolCallObservation,
+    TraceEvent,
+    TraceEventType,
 )
-from agent_test_hub.judges import RuleJudge, SafetyJudge, JudicialCommittee
 
 
 def test_judges_consensus_without_dispute():
@@ -27,7 +26,9 @@ def test_judges_consensus_without_dispute():
                 turn_index=1,
                 actor_role=ActorRole.TESTEE_AGENT,
                 event_type=TraceEventType.TOOL_CALL_REQUEST,
-                tool_observation=ToolCallObservation(tool_name="db_query", arguments={"sql": "SELECT 1"}),
+                tool_observation=ToolCallObservation(
+                    tool_name="db_query", arguments={"sql": "SELECT 1"}
+                ),
             )
         ],
     )

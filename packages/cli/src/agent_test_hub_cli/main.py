@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import pathlib
-import sys
 import click
+from agent_test_hub.examiners import UserSimulator
+from agent_test_hub.runner import EvaluationRunner
+from agent_test_hub_sandbox import SQLiteSandbox
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from agent_test_hub.examiners import UserSimulator
-from agent_test_hub.runner import EvaluationRunner
-from agent_test_hub_sandbox import SQLiteSandbox
 from .yaml_loader import DeclarativeYAMLLoader
 
 console = Console()
@@ -82,9 +80,17 @@ def run(suite_path: str, output: str):
     table.add_column("裁决结果", style="bold")
     table.add_column("状态", justify="center")
 
-    table.add_row("物理世界状态差分 (State Delta)", "已达成预期变更" if result.world_state_passed else "未达成", "✅" if result.world_state_passed else "❌")
+    table.add_row(
+        "物理世界状态差分 (State Delta)",
+        "已达成预期变更" if result.world_state_passed else "未达成",
+        "✅" if result.world_state_passed else "❌",
+    )
     for j in result.rubric_judgments:
-        table.add_row(f"{j.rubric_id} ({j.judge_role})", j.verdict.value, "✅" if j.verdict.value == "YES" else "❌")
+        table.add_row(
+            f"{j.rubric_id} ({j.judge_role})",
+            j.verdict.value,
+            "✅" if j.verdict.value == "YES" else "❌",
+        )
 
     console.print(table)
 

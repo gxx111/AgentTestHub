@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 from typing import Any
+
 import yaml
 from agent_test_hub.schemas import (
     BinaryRubric,
@@ -19,14 +20,12 @@ class DeclarativeYAMLLoader:
     @classmethod
     def load_from_file(cls, yaml_path: str | pathlib.Path) -> dict[str, Any]:
         path = pathlib.Path(yaml_path)
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             raw_data = yaml.safe_load(f)
 
         # 1. 解析任务规范 TaskSpec
         raw_task = raw_data.get("task", {})
-        tools = [
-            ToolDefinition(**t) for t in raw_task.get("tools", [])
-        ]
+        tools = [ToolDefinition(**t) for t in raw_task.get("tools", [])]
         expectations = [
             WorldStateExpectation(**e) for e in raw_task.get("expected_world_states", [])
         ]

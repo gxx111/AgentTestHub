@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
 from agent_test_hub.diagnostics import CausalAttributionEngine
-from agent_test_hub.examiners import BaseExaminer, UserSimulator
+from agent_test_hub.examiners import BaseExaminer
 from agent_test_hub.judges import JudicialCommittee
 from agent_test_hub.metrics import BaseMetric
 from agent_test_hub.schemas import (
     ActorRole,
     BinaryRubric,
     BinaryVerdict,
-    EvaluationReport,
     ExecutionTrace,
-    RadarDimension,
     TaskEvaluationResult,
     TaskSpec,
     ToolCallObservation,
@@ -43,7 +43,7 @@ class EvaluationRunner:
         testee_agent_fn: Callable[[str, ExecutionTrace], dict[str, Any]],
     ) -> TaskEvaluationResult:
         """执行单任务完整动态评测闭环
-        
+
         Args:
             task: 任务规格定义
             examiner: 考官智能体 (如状态化用户模拟官)
@@ -127,10 +127,7 @@ class EvaluationRunner:
         world_state_passed = True
         for exp in task.expected_world_states:
             # 简单检查是否有对应的修改记录
-            matched = any(
-                m.get("table") == exp.target_identifier
-                for m in delta.modified_records
-            )
+            matched = any(m.get("table") == exp.target_identifier for m in delta.modified_records)
             if not matched:
                 world_state_passed = False
 
