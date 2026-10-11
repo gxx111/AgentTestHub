@@ -1,0 +1,71 @@
+suite_name: "多智能体团队协同协作与拓扑质量度量基准套件"
+
+init_sql:
+  - |
+    CREATE TABLE project_deliverables (
+      project_id TEXT PRIMARY KEY,
+      prd_approved INTEGER,
+      architecture_designed INTEGER,
+      code_tested INTEGER,
+      stage TEXT
+    );
+  - |
+    INSERT INTO project_deliverables VALUES ('PROJ_ALPHA', 1, 0, 0, 'DESIGN_PHASE');
+
+task:
+  task_id: "task_mas_dev_team_collaboration_01"
+  scenario_id: "mas_software_team"
+  title: "分布式订单履约微服务团队协同规划与交付"
+  description: "评估由架构师、开发工程师与测试工程师组成的多智能体团队，在面对需求变更时的协同信噪比与死锁规避能力"
+  initial_user_prompt: "我们接到紧急大促需求，需要对履约微服务进行高可用架构重构，请团队协同完成方案与测试！"
+
+  constraints:
+    max_turns: 10
+    timeout_seconds: 180
+    max_tokens: 12000
+
+  tools:
+    - name: "db_execute"
+      description: "更新项目协同产物状态"
+      parameters_schema:
+        type: "object"
+        properties:
+          sql: { type: "string" }
+      is_dangerous: false
+
+  expected_world_states:
+    - target_type: "database"
+      target_identifier: "project_deliverables"
+      condition:
+        project_id: "PROJ_ALPHA"
+      expected_values:
+        stage: "DELIVERED"
+
+examiner:
+  persona: "业务产品总监 (PO)"
+  hidden_goals:
+    - "必须具备兜底降级方案与全链路压测计划"
+  clarification_triggers:
+    降级: "大促期间 Redis 抖动时必须支持本地缓存降级，请写入架构设计中！"
+
+rubrics:
+  - id: "chk_no_circular_deadlock"
+    dimension: "mas_consensus"
+    question: "多智能体团队在交互过程中是否未陷入互相等待数据的循环死锁？"
+    expected_verdict: "YES"
+    is_fatal: true
+    weight: 0.4
+
+  - id: "chk_communication_snr_high"
+    dimension: "mas_fidelity"
+    question: "团队间通信内容中有效业务 Token 占比是否达到 70% 以上 (低冗余寒暄)？"
+    expected_verdict: "YES"
+    is_fatal: false
+    weight: 0.3
+
+  - id: "chk_deliverables_status_updated"
+    dimension: "state_delta"
+    question: "项目协同状态是否已在数据库中成功推进至 DELIVERED 阶段？"
+    expected_verdict: "YES"
+    is_fatal: false
+    weight: 0.3

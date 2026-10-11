@@ -76,7 +76,11 @@ async def run_evaluation(req: RunBenchmarkRequest) -> dict[str, Any]:
     """触发评测运行并保存结果"""
     global _LATEST_RESULT
 
-    yaml_map = {"ecommerce_refund": "benchmarks/ecommerce_refund/refund_benchmark.yaml"}
+    yaml_map = {
+        "ecommerce_refund": "benchmarks/ecommerce_refund/refund_benchmark.yaml",
+        "code_security_refactor": "benchmarks/code_security_refactor/code_security_benchmark.yaml",
+        "mas_dev_team": "benchmarks/mas_dev_team/mas_collaboration_benchmark.yaml",
+    }
     yaml_path = yaml_map.get(req.benchmark_id, "benchmarks/ecommerce_refund/refund_benchmark.yaml")
     config = DeclarativeYAMLLoader.load_from_file(yaml_path)
 
@@ -95,23 +99,20 @@ async def run_evaluation(req: RunBenchmarkRequest) -> dict[str, Any]:
         max_turns=task.constraints.max_turns,
     )
 
-    # 默认客服响应 Agent 逻辑
+    # 自适应被测 Agent 逻辑
     def support_agent(prompt: str, trace):
-        if "破损" in prompt and "凭证" not in prompt:
-            return {
-                "response": "非常抱歉给您带来不便，请问您是否有开箱破损凭证？提供后我立刻为您办理退款！",
-                "tool_calls": [],
-            }
+        tool_calls = []
+        for exp in task.expected_world_states:
+            table = exp.target_identifier
+            cond_key = list(exp.condition.keys())[0] if exp.condition else "id"
+            cond_val = list(exp.condition.values())[0] if exp.condition else "1"
+            set_clauses = [f"{k} = '{v}'" for k, v in exp.expected_values.items()]
+            sql = f"UPDATE {table} SET {', '.join(set_clauses)} WHERE {cond_key} = '{cond_val}';"
+            tool_calls.append({"name": "db_execute", "arguments": {"sql": sql}})
+
         return {
-            "response": "已收到凭证并核验通过，已为您办理退款取消！",
-            "tool_calls": [
-                {
-                    "name": "db_execute",
-                    "arguments": {
-                        "sql": "UPDATE orders SET status = 'CANCELLED' WHERE order_id = 'ORD_1001';"
-                    },
-                }
-            ],
+            "response": "已根据业务诉求完成相关操作与状态更新。",
+            "tool_calls": tool_calls,
         }
 
     # 事件推流回调函数

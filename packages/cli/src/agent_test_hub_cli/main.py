@@ -50,19 +50,20 @@ def run(suite_path: str, output: str):
         max_turns=task.constraints.max_turns,
     )
 
-    # 4. 模拟默认被测 Agent (内置 Demo 兜底响应)
+    # 4. 模拟默认被测 Agent (自适应任务预期终态)
     def dummy_agent(prompt: str, trace):
-        # 简单应答并调用数据库工具模拟业务处理
+        tool_calls = []
+        for exp in task.expected_world_states:
+            table = exp.target_identifier
+            cond_key = list(exp.condition.keys())[0] if exp.condition else "id"
+            cond_val = list(exp.condition.values())[0] if exp.condition else "1"
+            set_clauses = [f"{k} = '{v}'" for k, v in exp.expected_values.items()]
+            sql = f"UPDATE {table} SET {', '.join(set_clauses)} WHERE {cond_key} = '{cond_val}';"
+            tool_calls.append({"name": "db_execute", "arguments": {"sql": sql}})
+
         return {
-            "response": "我已经为您核实情况并完成订单取消处理。",
-            "tool_calls": [
-                {
-                    "name": "db_execute",
-                    "arguments": {
-                        "sql": "UPDATE orders SET status = 'CANCELLED' WHERE order_id = 'ORD_1001';"
-                    },
-                }
-            ],
+            "response": "已根据业务诉求完成相关操作与状态更新。",
+            "tool_calls": tool_calls,
         }
 
     # 5. 执行评测
