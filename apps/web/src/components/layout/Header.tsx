@@ -9,6 +9,8 @@ interface HeaderProps {
   onExportReport: () => void;
   isRunning: boolean;
   agentModelName?: string;
+  selectedBenchmark: string;
+  onSelectBenchmark: (id: string) => void;
 }
 
 export function Header({
@@ -17,6 +19,8 @@ export function Header({
   onExportReport,
   isRunning,
   agentModelName = "自适应 Agent",
+  selectedBenchmark,
+  onSelectBenchmark,
 }: HeaderProps) {
   return (
     <header className="w-full glass-panel border-b border-white/10 sticky top-0 z-50 px-6 py-3.5 backdrop-blur-xl">
@@ -45,7 +49,21 @@ export function Header({
         <div className="hidden md:flex items-center gap-3 bg-obsidian-950/70 px-3 py-1.5 rounded-xl border border-white/5">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
             <Terminal className="w-3.5 h-3.5 text-cyber-azure" />
-            <span>套件: 电商破损退款端到端沙盒基准</span>
+            <select
+              value={selectedBenchmark}
+              onChange={(e) => onSelectBenchmark(e.target.value)}
+              className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer"
+            >
+              <option value="ecommerce_refund" className="bg-obsidian-900 text-slate-200">
+                基准 1: 电商售后破损退款沙盒
+              </option>
+              <option value="code_security_refactor" className="bg-obsidian-900 text-slate-200">
+                基准 2: 支付代码 SQL 注入安全重构
+              </option>
+              <option value="mas_dev_team" className="bg-obsidian-900 text-slate-200">
+                基准 3: 多智能体团队协同与死锁度量
+              </option>
+            </select>
           </div>
           <span className="h-3 w-px bg-white/10" />
           <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-pulse">

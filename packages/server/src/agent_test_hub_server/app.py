@@ -51,6 +51,11 @@ class RunBenchmarkRequest(BaseModel):
     target_agent: TargetAgentConfig = Field(default_factory=TargetAgentConfig)
 
 
+class CreateBenchmarkRequest(BaseModel):
+    benchmark_id: str
+    yaml_content: str
+
+
 @app.get("/health")
 def health_check() -> dict[str, str]:
     """系统健康检查端点"""
@@ -83,6 +88,22 @@ def list_benchmarks() -> list[dict[str, Any]]:
                     except Exception:
                         pass
     return results
+
+
+@app.post("/api/v1/benchmarks")
+def create_benchmark(req: CreateBenchmarkRequest) -> dict[str, Any]:
+    """保存或新增自定义基准场景到 benchmarks/ 资产库"""
+    target_dir = pathlib.Path("benchmarks") / req.benchmark_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target_file = target_dir / f"{req.benchmark_id}.yaml"
+    with open(target_file, "w", encoding="utf-8") as f:
+        f.write(req.yaml_content)
+
+    return {
+        "status": "success",
+        "benchmark_id": req.benchmark_id,
+        "saved_path": str(target_file),
+    }
 
 
 @app.post("/api/v1/evaluations/run")
