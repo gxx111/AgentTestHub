@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #090A0F;
+  --foreground: #F0F4F8;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* 玻璃拟态深渊卡片 */
+.glass-panel {
+  background: rgba(15, 17, 26, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(22, 25, 38, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.25s ease;
+}
+
+.glass-card:hover {
+  background: rgba(26, 30, 46, 0.85);
+  border-color: rgba(0, 242, 254, 0.3);
+  box-shadow: 0 8px 32px -8px rgba(0, 242, 254, 0.15);
+}
+
+/* 赛博微光边框 */
+.neon-border-cyan {
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+}
+
+.neon-border-hazard {
+  border: 1px solid rgba(255, 0, 85, 0.4);
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
+}
+
+/* React Flow 暗色样式重载 */
+.react-flow__node {
+  border-radius: 12px;
+  cursor: grab;
+}
+
+.react-flow__handle {
+  width: 10px;
+  height: 10px;
+  background: #00F2FE;
+  border: 2px solid #090A0F;
+  border-radius: 50%;
+}
+
+.react-flow__edge-path {
+  stroke-dasharray: 6;
+  animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
