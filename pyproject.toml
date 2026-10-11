@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "agent-test-hub"
+version = "0.1.0"
+description = "Enterprise & Frontier Multi-Agent Collaborative Agent Evaluation Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "AgentTestHub Architecture Group", email = "dev@agenttesthub.io" }
+]
+keywords = [
+    "ai-agent",
+    "evaluation",
+    "multi-agent",
+    "benchmarking",
+    "llm-judge",
+    "mcp",
+    "sandboxing"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+    "pydantic>=2.6.0",
+    "litellm>=1.40.0",
+    "networkx>=3.2.0",
+    "pyyaml>=6.0.1",
+    "click>=8.1.7",
+    "rich>=13.7.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[project.scripts]
+agent-eval = "agent_test_hub_cli.main:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "packages/core/src/agent_test_hub",
+    "packages/sandbox/src/agent_test_hub_sandbox",
+    "packages/cli/src/agent_test_hub_cli"
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = [
+    "packages/core/src",
+    "packages/sandbox/src",
+    "packages/cli/src"
+]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]
