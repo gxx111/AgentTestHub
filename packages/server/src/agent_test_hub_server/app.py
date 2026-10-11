@@ -115,6 +115,7 @@ async def run_evaluation(req: RunBenchmarkRequest) -> dict[str, Any]:
         "ecommerce_refund": "benchmarks/ecommerce_refund/refund_benchmark.yaml",
         "code_security_refactor": "benchmarks/code_security_refactor/code_security_benchmark.yaml",
         "mas_dev_team": "benchmarks/mas_dev_team/mas_collaboration_benchmark.yaml",
+        "ant_financial_sop": "benchmarks/ant_financial_sop/financial_sop_benchmark.yaml",
     }
     yaml_path = yaml_map.get(req.benchmark_id, "benchmarks/ecommerce_refund/refund_benchmark.yaml")
     config = DeclarativeYAMLLoader.load_from_file(yaml_path)

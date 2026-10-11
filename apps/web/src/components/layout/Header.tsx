@@ -63,6 +63,9 @@ export function Header({
               <option value="mas_dev_team" className="bg-obsidian-900 text-slate-200">
                 基准 3: 多智能体团队协同与死锁度量
               </option>
+              <option value="ant_financial_sop" className="bg-obsidian-900 text-slate-200">
+                基准 4: 蚂蚁金融信贷风控 SOP 严苛协同
+              </option>
             </select>
           </div>
           <span className="h-3 w-px bg-white/10" />

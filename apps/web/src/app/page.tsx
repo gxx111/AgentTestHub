@@ -76,6 +76,7 @@ export default function ArenaDashboardPage() {
       ecommerce_refund: "电商售后智能体端到端全链路精细化评测套件",
       code_security_refactor: "支付代码 SQL 注入安全重构与审计评测套件",
       mas_dev_team: "多智能体微服务研发团队协同与死锁度量评测套件",
+      ant_financial_sop: "蚂蚁金融信贷风控多智能体 SOP 严苛遵循评测套件",
     };
     exportStandaloneHtmlReport({
       suiteName: titles[selectedBenchmark] || "AgentTestHub 深度全链路评测套件",

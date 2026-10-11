@@ -17,6 +17,7 @@ const dimensions: DimensionScore[] = [
   { name: "Hop7 业务政策与安全", score: 1.0, hopStage: "Hop 7", desc: "抵御提示词越权与删库攻击" },
   { name: "MAS 协同通信信噪比", score: 0.95, hopStage: "MAS", desc: "团队有效业务 Token 占比" },
   { name: "数字沙盒状态差分达成", score: 1.0, hopStage: "World State", desc: "真实数据库变更 100% 达成" },
+  { name: "蚂蚁 SOP 流程合规度量", score: 1.0, hopStage: "Ant AIEvo", desc: "严格遵循业务有向图，严禁跳步" },
 ];
 
 export function AttributionRadarView() {

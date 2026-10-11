@@ -23,11 +23,12 @@ def test_server_list_benchmarks(client):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) >= 3
+    assert len(data) >= 4
     benchmark_ids = [item["id"] for item in data]
     assert "ecommerce_refund" in benchmark_ids
     assert "code_security_refactor" in benchmark_ids
     assert "mas_dev_team" in benchmark_ids
+    assert "ant_financial_sop" in benchmark_ids
 
 
 def test_server_run_and_get_evaluation(client):
