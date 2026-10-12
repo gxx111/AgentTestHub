@@ -42,7 +42,11 @@ class LiteLLMAgentAdapter:
         if not api_base:
             return None
         base = api_base.strip().rstrip("/")
-        if ("http://" in base or "https://" in base) and not base.endswith("/v1") and ("11434" not in base):
+        if (
+            ("http://" in base or "https://" in base)
+            and not base.endswith("/v1")
+            and ("11434" not in base)
+        ):
             return f"{base}/v1"
         return base
 
@@ -103,10 +107,12 @@ class LiteLLMAgentAdapter:
             if "401" in err_str or "Invalid API key" in err_str:
                 tip = "【鉴权失败 401】API Key 无效或未授权，请检查密钥是否正确（勿误填为模型名）。"
             elif "404" in err_str or "NotFoundError" in err_str:
-                tip = "【路径未找到 404】未找到该模型或 API Base 路径错误，请确认网关是否支持该模型。"
+                tip = (
+                    "【路径未找到 404】未找到该模型或 API Base 路径错误，请确认网关是否支持该模型。"
+                )
             elif "Connection" in err_str or "Timeout" in err_str:
                 tip = "【网络超时】无法连接到指定 API Base 地址，请检查 IP 端口与网络防火墙。"
-            
+
             return {
                 "status": "error",
                 "model": self.model,

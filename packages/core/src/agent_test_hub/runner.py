@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -53,6 +54,9 @@ class EvaluationRunner:
             event_callback: 可选的事件流实时监听回调，用于 WebSocket 或 SSE 实时推流
         """
 
+        started_at = time.perf_counter()
+        execution_error = None
+
         def emit(event: TraceEvent) -> None:
             trace.events.append(event)
             if event_callback:
@@ -88,7 +92,28 @@ class EvaluationRunner:
                 break
 
             # 被测 Agent 执行响应
-            agent_output = testee_agent_fn(action.content, trace)
+            try:
+                agent_output = testee_agent_fn(action.content, trace)
+                if not isinstance(agent_output, dict):
+                    raise TypeError("Agent output must be an object")
+                if (
+                    not isinstance(agent_output.get("response", ""), str)
+                    or agent_output.get("thought") is not None
+                    and not isinstance(agent_output["thought"], str)
+                    or not isinstance(agent_output.get("tool_calls", []), list)
+                    or any(
+                        not isinstance(call, dict)
+                        or not isinstance(call.get("name", ""), str)
+                        or not isinstance(call.get("arguments", {}), dict)
+                        for call in agent_output.get("tool_calls", [])
+                    )
+                ):
+                    raise TypeError("Malformed agent response")
+            except Exception as exc:
+                agent_output = {
+                    "response": "Agent execution failed.",
+                    "error": type(exc).__name__,
+                }
             response_text = agent_output.get("response", "")
             thought_text = agent_output.get("thought", None)
             tool_calls_req = agent_output.get("tool_calls", [])
@@ -106,7 +131,12 @@ class EvaluationRunner:
             )
 
             # 若 Agent 遇到致命通信或配置错误，立即中止评测并触发异常熔断
-            if agent_output.get("error") or "LiteLLM 调用异常" in response_text or "Webhook 调用异常" in response_text:
+            if (
+                agent_output.get("error")
+                or "LiteLLM 调用异常" in response_text
+                or "Webhook 调用异常" in response_text
+            ):
+                execution_error = "AgentExecutionError"
                 break
 
             # 在沙盒中执行 Agent 调用的工具
@@ -114,7 +144,14 @@ class EvaluationRunner:
                 tool_name = call.get("name", "")
                 args = call.get("arguments", {})
                 start_t = datetime.datetime.now()
-                sandbox_res = self.sandbox.execute_tool(tool_name, args)
+                try:
+                    sandbox_res = self.sandbox.execute_tool(tool_name, args)
+                except Exception as exc:
+                    sandbox_res = {
+                        "status": "error",
+                        "error_code": type(exc).__name__,
+                    }
+                    execution_error = "ToolExecutionError"
                 duration = (datetime.datetime.now() - start_t).total_seconds() * 1000.0
 
                 is_err = sandbox_res.get("status") == "error"
@@ -133,6 +170,11 @@ class EvaluationRunner:
                         ),
                     )
                 )
+                if execution_error:
+                    break
+
+            if execution_error:
+                break
 
             turn += 1
 
@@ -155,12 +197,7 @@ class EvaluationRunner:
                 if not all(matched_rec.get(k) == v for k, v in exp.expected_values.items()):
                     world_state_passed = False
             else:
-                # 若条件中无主键或未直接查到记录，回退检查修改动作
-                matched_in_delta = any(
-                    m.get("table") == exp.target_identifier for m in delta.modified_records
-                )
-                if not matched_in_delta:
-                    world_state_passed = False
+                world_state_passed = False
 
         # 4. 陪审团对美团二元 Rubric 进行合议裁决与辩论
         all_judgments = []
@@ -178,8 +215,16 @@ class EvaluationRunner:
                 rubric_passed = False
 
         # 5. 综合判定与计算得分
-        is_task_passed = world_state_passed and rubric_passed
-        total_score = 1.0 if is_task_passed else (0.5 if world_state_passed else 0.0)
+        is_task_passed = world_state_passed and rubric_passed and not execution_error
+        total_score = (
+            0.0
+            if execution_error
+            else 1.0
+            if is_task_passed
+            else 0.5
+            if world_state_passed
+            else 0.0
+        )
 
         # 6. 若失败，生成阿里 7-Hop 因果归因树
         attribution_tree = []
@@ -191,6 +236,13 @@ class EvaluationRunner:
                 world_state_passed=world_state_passed,
             )
 
+        duration_ms = (time.perf_counter() - started_at) * 1000
+        trace = trace.model_copy(
+            update={
+                "end_time": datetime.datetime.now(datetime.timezone.utc),
+                "total_duration_ms": duration_ms,
+            }
+        )
         return TaskEvaluationResult(
             task_id=task.task_id,
             is_passed=is_task_passed,
@@ -202,5 +254,6 @@ class EvaluationRunner:
             attribution_tree=attribution_tree,
             trace=trace,
             total_tokens=trace.total_tokens,
-            total_duration_ms=trace.total_duration_ms,
+            total_duration_ms=duration_ms,
+            execution_error=execution_error,
         )

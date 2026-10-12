@@ -64,6 +64,7 @@ class TaskEvaluationResult(BaseModel):
     # 性能与开销指标
     total_tokens: int = Field(default=0, ge=0)
     total_duration_ms: float = Field(default=0.0, ge=0.0)
+    execution_error: str | None = Field(default=None, description="安全脱敏的执行错误分类")
 
 
 class EvaluationReport(BaseModel):

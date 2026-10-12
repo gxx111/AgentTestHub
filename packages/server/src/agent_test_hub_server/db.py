@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import datetime
 import json
+import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("agent_test_hub_data.db")
+DB_PATH = Path(os.environ.get("AGENT_TEST_HUB_DB", "agent_test_hub_data.db"))
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -38,6 +39,39 @@ def init_db() -> None:
         is_default INTEGER DEFAULT 1,
         created_at TEXT NOT NULL,
         FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS workspace_members (
+        workspace_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'engineer',
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (workspace_id, user_id),
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS user_credentials (
+        user_id TEXT PRIMARY KEY,
+        password_hash TEXT NOT NULL,
+        password_salt TEXT NOT NULL,
+        password_iterations INTEGER NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+        token_hash TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     """)
 
@@ -128,6 +162,37 @@ def init_db() -> None:
         FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
     );
     """)
+
+    run_columns = {row["name"] for row in cursor.execute("PRAGMA table_info(eval_runs)")}
+    for column, definition in (
+        ("experiment_id", "TEXT"),
+        ("repetition_index", "INTEGER NOT NULL DEFAULT 1"),
+        ("repetitions", "INTEGER NOT NULL DEFAULT 1"),
+        ("snapshot_hash", "TEXT"),
+        ("snapshot_json", "TEXT"),
+    ):
+        if column not in run_columns:
+            cursor.execute(f"ALTER TABLE eval_runs ADD COLUMN {column} {definition}")
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS eval_experiments (
+        id TEXT PRIMARY KEY,
+        workspace_id TEXT NOT NULL,
+        agent_id TEXT NOT NULL,
+        dataset_id TEXT NOT NULL,
+        policy_id TEXT,
+        status TEXT NOT NULL,
+        repetitions INTEGER NOT NULL,
+        snapshot_hash TEXT NOT NULL,
+        snapshot_json TEXT NOT NULL,
+        summary_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
+    );
+    """)
+    cursor.execute(
+        "CREATE INDEX IF NOT EXISTS idx_eval_runs_experiment ON eval_runs(experiment_id, repetition_index);"
+    )
 
     conn.commit()
 
@@ -324,4 +389,10 @@ def init_db() -> None:
 
         conn.commit()
 
+    # Keep legacy workspace owners usable while allowing shared membership.
+    cursor.execute("""
+        INSERT OR IGNORE INTO workspace_members (workspace_id, user_id, role, created_at)
+        SELECT id, user_id, 'owner', created_at FROM workspaces;
+    """)
+    conn.commit()
     conn.close()
