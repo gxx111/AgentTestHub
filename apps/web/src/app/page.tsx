@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Header } from "@/components/layout/Header";
 import { FlowCanvas } from "@/components/arena/FlowCanvas";
+import { DualTeamBattleView } from "@/components/arena/DualTeamBattleView";
 import { DebateWall } from "@/components/debate/DebateWall";
 import { AttributionRadarView } from "@/components/diagnostics/AttributionRadarView";
 import { ScenarioStudio } from "@/components/studio/ScenarioStudio";
@@ -14,6 +15,7 @@ import { exportStandaloneHtmlReport } from "@/lib/exportReport";
 import {
   Table2,
   Network,
+  Swords,
   Scale,
   GitBranch,
   CheckCircle2,
@@ -134,7 +136,7 @@ const FALLBACK_BENCHMARKS: Record<string, { suiteName: string; cases: BenchmarkC
 
 export default function ArenaDashboardPage() {
   const [activeTab, setActiveTab] = useState<
-    "matrix" | "arena" | "comparison" | "debate" | "diagnostics" | "studio"
+    "matrix" | "battle" | "arena" | "comparison" | "debate" | "diagnostics" | "studio"
   >("matrix");
   const [isRunningAll, setIsRunningAll] = useState(false);
   const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
@@ -383,6 +385,16 @@ export default function ArenaDashboardPage() {
               <Table2 className="w-3.5 h-3.5" /> 用例评测矩阵 (Matrix)
             </button>
             <button
+              onClick={() => setActiveTab("battle")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === "battle"
+                  ? "bg-gradient-to-r from-crimson-hazard/20 to-amber-flame/20 text-amber-flame border border-amber-flame/40 shadow-lg shadow-amber-flame/10"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Swords className="w-3.5 h-3.5" /> 考官团 vs 考生团对决 (Battle)
+            </button>
+            <button
               onClick={() => setActiveTab("arena")}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
                 activeTab === "arena"
@@ -453,6 +465,18 @@ export default function ArenaDashboardPage() {
             onRunAll={handleRunAll}
             onRunSingle={handleRunSingle}
             onInspectTrace={(res) => setInspectedCaseResult(res)}
+          />
+        )}
+
+        {activeTab === "battle" && (
+          <DualTeamBattleView
+            activeCase={selectedCase}
+            activeResult={selectedCase ? caseResults[selectedCase.id] : null}
+            agentModelName={
+              agentConfig.agent_type === "mock"
+                ? "自适应 Agent"
+                : agentConfig.model_name
+            }
           />
         )}
 

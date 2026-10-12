@@ -27,6 +27,7 @@ export interface TraceEventData {
   actor_name: string;
   event_type: string;
   content: string;
+  thought?: string | null;
   tool_observation?: {
     tool_name: string;
     arguments: Record<string, any>;
@@ -250,24 +251,36 @@ export function TraceInspectorDrawer({ caseData, onClose }: TraceInspectorDrawer
                     )}
 
                     <div
-                      className={`max-w-[80%] rounded-2xl p-3.5 space-y-1.5 ${
+                      className={`max-w-[85%] rounded-2xl p-3.5 space-y-2.5 ${
                         isAgent
-                          ? "bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-indigo-500/30 text-slate-100"
+                          ? "bg-gradient-to-r from-blue-600/15 to-indigo-600/15 border border-indigo-500/30 text-slate-100"
                           : isRedTeam
                           ? "bg-crimson-hazard/10 border border-crimson-hazard/30 text-red-200"
                           : "bg-obsidian-900 border border-white/10 text-slate-200"
                       }`}
                     >
                       <div className="flex items-center justify-between text-[10px] font-mono opacity-60 pb-1 border-b border-white/5">
-                        <span>
+                        <span className="font-bold">
                           {isAgent
-                            ? "被测 Agent"
+                            ? "被测 Agent (Target)"
                             : isRedTeam
-                            ? "考官 · 对抗攻防红队"
-                            : "考官 · 用户模拟官"}
+                            ? "考官 · 对抗攻防红队 (Red-Team)"
+                            : "考官 · 状态化用户模拟官 (UserSimulator)"}
                         </span>
                         <span>轮次 {evt.turn_index}</span>
                       </div>
+
+                      {/* 若存在 Agent 的 ReAct 思考链，清晰展示独立思考卡片 */}
+                      {isAgent && evt.thought && (
+                        <div className="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-[11px] font-mono text-indigo-200 space-y-1">
+                          <div className="flex items-center gap-1.5 text-cyber-cyan font-bold text-[10px] uppercase">
+                            <Sparkles className="w-3 h-3 text-cyber-cyan" />
+                            <span>自主推理与反思链 (ReAct Thought)</span>
+                          </div>
+                          <p className="leading-relaxed opacity-90">{evt.thought}</p>
+                        </div>
+                      )}
+
                       <p className="leading-relaxed whitespace-pre-wrap">{evt.content}</p>
                     </div>
 

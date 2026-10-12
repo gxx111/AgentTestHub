@@ -63,9 +63,10 @@ class TraceEvent(BaseModel):
     event_type: TraceEventType = Field(description="事件类型")
 
     # 消息内容与载荷
-    content: str = Field(default="", description="文本消息或思考链内容")
+    content: str = Field(default="", description="文本消息或最终输出")
+    thought: str | None = Field(default=None, description="自主思考与推理链 (ReAct Thought)")
     tool_observation: ToolCallObservation | None = Field(
-        default=None, description="工具调用观测数据"
+        default=None, description="工具调用观测数据 (ReAct Action & Observation)"
     )
 
     # 资源消耗记录

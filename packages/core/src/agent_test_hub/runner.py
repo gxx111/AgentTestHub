@@ -90,9 +90,10 @@ class EvaluationRunner:
             # 被测 Agent 执行响应
             agent_output = testee_agent_fn(action.content, trace)
             response_text = agent_output.get("response", "")
+            thought_text = agent_output.get("thought", None)
             tool_calls_req = agent_output.get("tool_calls", [])
 
-            # 记录 Agent 思考或发言
+            # 记录 Agent 思考链与回复事件 (ReAct Thought & Response)
             emit(
                 TraceEvent(
                     turn_index=turn,
@@ -100,6 +101,7 @@ class EvaluationRunner:
                     actor_name="testee",
                     event_type=TraceEventType.AGENT_MESSAGE,
                     content=response_text,
+                    thought=thought_text,
                 )
             )
 
