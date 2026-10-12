@@ -10,6 +10,9 @@ import { ScenarioStudio } from "@/components/studio/ScenarioStudio";
 import { TestMatrixTable, BenchmarkCaseInfo } from "@/components/matrix/TestMatrixTable";
 import { TraceInspectorDrawer, TestCaseResultData } from "@/components/trace/TraceInspectorDrawer";
 import { ModelComparisonArena } from "@/components/comparison/ModelComparisonArena";
+import { AgentRegistryView } from "@/components/agents/AgentRegistryView";
+import { DatasetsView } from "@/components/datasets/DatasetsView";
+import { UniversalEvalView } from "@/components/runs/UniversalEvalView";
 import { AgentSettingsModal, TargetAgentConfigState } from "@/components/layout/AgentSettingsModal";
 import { exportStandaloneHtmlReport } from "@/lib/exportReport";
 import {
@@ -21,6 +24,10 @@ import {
   CheckCircle2,
   Sparkles,
   Trophy,
+  Bot,
+  Database,
+  History,
+  Rocket,
 } from "lucide-react";
 
 const FALLBACK_BENCHMARKS: Record<string, { suiteName: string; cases: BenchmarkCaseInfo[] }> = {
@@ -136,8 +143,8 @@ const FALLBACK_BENCHMARKS: Record<string, { suiteName: string; cases: BenchmarkC
 
 export default function ArenaDashboardPage() {
   const [activeTab, setActiveTab] = useState<
-    "matrix" | "battle" | "arena" | "comparison" | "debate" | "diagnostics" | "studio"
-  >("matrix");
+    "runs" | "agents" | "datasets" | "matrix" | "battle" | "arena" | "comparison" | "debate" | "diagnostics" | "studio"
+  >("runs");
   const [isRunningAll, setIsRunningAll] = useState(false);
   const [runningCaseId, setRunningCaseId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -375,6 +382,36 @@ export default function ArenaDashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-2.5 rounded-2xl border border-white/10">
           <div className="flex items-center gap-1.5 p-1 bg-obsidian-900 rounded-xl border border-white/5 w-full sm:w-auto overflow-x-auto">
             <button
+              onClick={() => setActiveTab("runs")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === "runs"
+                  ? "bg-gradient-to-r from-cyber-cyan/20 to-cyber-azure/20 text-cyber-cyan border border-cyber-cyan/40 shadow-lg shadow-cyber-cyan/10"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Rocket className="w-3.5 h-3.5" /> 调度大盘 (Launchpad)
+            </button>
+            <button
+              onClick={() => setActiveTab("agents")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === "agents"
+                  ? "bg-gradient-to-r from-indigo-500/20 to-blue-600/20 text-indigo-300 border border-indigo-500/40 shadow-lg shadow-indigo-500/10"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Bot className="w-3.5 h-3.5" /> 智能体库 (Agents CRUD)
+            </button>
+            <button
+              onClick={() => setActiveTab("datasets")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
+                activeTab === "datasets"
+                  ? "bg-gradient-to-r from-emerald-pulse/20 to-teal-500/20 text-emerald-pulse border border-emerald-pulse/40 shadow-lg shadow-emerald-pulse/10"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Database className="w-3.5 h-3.5" /> 数据集 (Datasets CRUD)
+            </button>
+            <button
               onClick={() => setActiveTab("matrix")}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-mono text-xs font-bold transition-all whitespace-nowrap ${
                 activeTab === "matrix"
@@ -454,6 +491,10 @@ export default function ArenaDashboardPage() {
         </div>
 
         {/* 主视图切换 */}
+        {activeTab === "runs" && <UniversalEvalView />}
+        {activeTab === "agents" && <AgentRegistryView />}
+        {activeTab === "datasets" && <DatasetsView />}
+
         {activeTab === "matrix" && (
           <TestMatrixTable
             benchmarkId={selectedBenchmark}
