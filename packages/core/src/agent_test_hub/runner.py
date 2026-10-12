@@ -103,6 +103,10 @@ class EvaluationRunner:
                 )
             )
 
+            # 若 Agent 遇到致命通信或配置错误，立即中止评测并触发异常熔断
+            if agent_output.get("error") or "LiteLLM 调用异常" in response_text or "Webhook 调用异常" in response_text:
+                break
+
             # 在沙盒中执行 Agent 调用的工具
             for call in tool_calls_req:
                 tool_name = call.get("name", "")

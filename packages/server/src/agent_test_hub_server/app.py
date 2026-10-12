@@ -78,6 +78,32 @@ def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "AgentTestHub Engine", "version": "0.1.0"}
 
 
+@app.post("/api/v1/agents/test-connection")
+def test_agent_connection(req: TargetAgentConfig) -> dict[str, Any]:
+    """测试被测 Agent / 大模型连接可用性"""
+    if req.agent_type == "litellm":
+        adapter = LiteLLMAgentAdapter(
+            model=req.model_name,
+            api_key=req.api_key,
+            api_base=req.api_base,
+        )
+        return adapter.test_connection()
+    elif req.agent_type == "webhook" and req.webhook_url:
+        import httpx
+
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get(req.webhook_url)
+                return {
+                    "status": "ok",
+                    "status_code": resp.status_code,
+                    "message": "Webhook 端点可连通",
+                }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
+    return {"status": "ok", "message": "内建自适应测试桩就绪"}
+
+
 @app.get("/api/v1/benchmarks")
 def list_benchmarks() -> list[dict[str, Any]]:
     """列出系统预置的所有基准场景列表"""

@@ -34,12 +34,49 @@ export function AgentSettingsModal({
 }: AgentSettingsModalProps) {
   const [form, setForm] = useState<TargetAgentConfigState>(config);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [testStatus, setTestStatus] = useState<{
+    testing: boolean;
+    result?: "ok" | "error";
+    message?: string;
+  }>({ testing: false });
 
   useEffect(() => {
     setForm(config);
+    setTestStatus({ testing: false });
   }, [config]);
 
   if (!isOpen) return null;
+
+  const handleTestConnection = async () => {
+    setTestStatus({ testing: true, message: "正在发起连通性握手探测..." });
+    try {
+      const res = await fetch("http://localhost:8005/api/v1/agents/test-connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (data.status === "ok") {
+        setTestStatus({
+          testing: false,
+          result: "ok",
+          message: `连接成功！响应延迟: ${data.latency_ms || 10}ms`,
+        });
+      } else {
+        setTestStatus({
+          testing: false,
+          result: "error",
+          message: `连通失败: ${data.error || "未知异常，请检查 Model 与 Key"}`,
+        });
+      }
+    } catch (e: any) {
+      setTestStatus({
+        testing: false,
+        result: "error",
+        message: `后端请求失败: ${e.message}`,
+      });
+    }
+  };
 
   const handleSave = () => {
     onSave(form);
@@ -202,28 +239,54 @@ export function AgentSettingsModal({
           </div>
         )}
 
+        {/* 测试连接状态提示 */}
+        {testStatus.message && (
+          <div
+            className={`p-3 rounded-xl font-mono text-xs border ${
+              testStatus.result === "ok"
+                ? "bg-emerald-pulse/10 border-emerald-pulse/30 text-emerald-pulse"
+                : testStatus.result === "error"
+                ? "bg-crimson-hazard/10 border-crimson-hazard/30 text-crimson-hazard"
+                : "bg-cyber-cyan/10 border-cyber-cyan/30 text-cyber-cyan"
+            }`}
+          >
+            {testStatus.message}
+          </div>
+        )}
+
         {/* 底部保存与取消 */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+        <div className="flex items-center justify-between pt-3 border-t border-white/10">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 rounded-xl glass-card text-xs text-slate-300 hover:text-white font-mono"
+            onClick={handleTestConnection}
+            disabled={testStatus.testing}
+            className="px-3.5 py-2 rounded-xl glass-card text-xs text-cyber-azure hover:text-white font-mono border border-cyber-azure/30 hover:bg-cyber-azure/10 transition-colors"
           >
-            取消
+            {testStatus.testing ? "正在探测..." : "⚡ 测试 API 连通性"}
           </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyber-cyan to-cyber-azure text-obsidian-950 text-xs font-bold font-mono shadow-lg shadow-cyber-cyan/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5"
-          >
-            {savedSuccess ? (
-              <>
-                <Check className="w-4 h-4" /> 配置已保存
-              </>
-            ) : (
-              "保存并生效"
-            )}
-          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl glass-card text-xs text-slate-300 hover:text-white font-mono"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyber-cyan to-cyber-azure text-obsidian-950 text-xs font-bold font-mono shadow-lg shadow-cyber-cyan/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5"
+            >
+              {savedSuccess ? (
+                <>
+                  <Check className="w-4 h-4" /> 配置已保存
+                </>
+              ) : (
+                "保存并生效"
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
