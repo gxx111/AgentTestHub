@@ -134,13 +134,27 @@ class EvaluationRunner:
         snap_final = self.sandbox.snapshot()
         delta = self.sandbox.compute_diff(snap_initial, snap_final)
 
-        # 校验预期物理终态
+        # 校验预期物理终态 (严谨核对沙盒数据表当前字段值)
         world_state_passed = True
         for exp in task.expected_world_states:
-            # 简单检查是否有对应的修改记录
-            matched = any(m.get("table") == exp.target_identifier for m in delta.modified_records)
-            if not matched:
-                world_state_passed = False
+            tbl_records = snap_final.tables_data.get(exp.target_identifier, [])
+            matched_rec = None
+            for r in tbl_records:
+                if all(r.get(k) == v for k, v in exp.condition.items()):
+                    matched_rec = r
+                    break
+
+            if matched_rec is not None:
+                # 检查目标字段是否吻合期望值
+                if not all(matched_rec.get(k) == v for k, v in exp.expected_values.items()):
+                    world_state_passed = False
+            else:
+                # 若条件中无主键或未直接查到记录，回退检查修改动作
+                matched_in_delta = any(
+                    m.get("table") == exp.target_identifier for m in delta.modified_records
+                )
+                if not matched_in_delta:
+                    world_state_passed = False
 
         # 4. 陪审团对美团二元 Rubric 进行合议裁决与辩论
         all_judgments = []
@@ -180,4 +194,7 @@ class EvaluationRunner:
             rubric_judgments=all_judgments,
             unknown_rubric_count=unknown_count,
             attribution_tree=attribution_tree,
+            trace=trace,
+            total_tokens=trace.total_tokens,
+            total_duration_ms=trace.total_duration_ms,
         )

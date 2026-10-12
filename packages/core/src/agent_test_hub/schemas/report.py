@@ -5,6 +5,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from .rubric import RubricJudgment
+from .trace import ExecutionTrace
 
 
 class AttributionNode(BaseModel):
@@ -56,6 +57,9 @@ class TaskEvaluationResult(BaseModel):
     attribution_tree: list[AttributionNode] = Field(
         default_factory=list, description="故障因果推导链路"
     )
+
+    # 完整执行轨迹事件流
+    trace: ExecutionTrace | None = Field(default=None, description="完整执行轨迹日志")
 
     # 性能与开销指标
     total_tokens: int = Field(default=0, ge=0)

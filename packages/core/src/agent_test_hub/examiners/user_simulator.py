@@ -64,10 +64,24 @@ class UserSimulator(BaseExaminer):
                 )
 
         # 若 Agent 已完成操作或致歉
-        if any(w in last_agent_msg for w in ["已为您办理", "已退款", "处理完毕", "成功取消"]):
+        if any(
+            w in last_agent_msg
+            for w in [
+                "已为您办理",
+                "成功办理",
+                "已退款",
+                "退款成功",
+                "退款取消",
+                "处理完毕",
+                "成功取消",
+                "拦截",
+                "拒绝执行",
+                "无法为您办理",
+            ]
+        ):
             return ExaminerAction(
                 action_type="terminate",
-                content="好的，非常感谢，事情办成了！",
+                content="收到答复，测试交互结束。",
                 should_stop_eval=True,
             )
 

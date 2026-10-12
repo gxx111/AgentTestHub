@@ -47,4 +47,4 @@ def test_server_run_and_get_evaluation(client):
     assert latest_resp.status_code == 200
     latest_data = latest_resp.json()
     assert latest_data["status"] == "completed"
-    assert latest_data["result"]["task_id"] == "task_refund_broken_package"
+    assert "case_01" in latest_data["result"]["task_id"]

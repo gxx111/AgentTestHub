@@ -13,7 +13,7 @@ from .base import BaseJudge
 
 
 class RuleJudge(BaseJudge):
-    """规则遵循法官：专注核查业务边界、约束及是否遵循流程规定"""
+    """规则遵循法官：专注核查业务边界、约束及是否推进流程"""
 
     role: str = "rule_judge"
 
@@ -23,11 +23,9 @@ class RuleJudge(BaseJudge):
             e.content for e in trace.events if e.event_type == TraceEventType.AGENT_MESSAGE
         ]
         tool_calls = trace.get_tool_calls()
-
-        # 示例客观语义匹配逻辑
         text_corpus = " ".join(agent_msgs) + " " + " ".join([c.tool_name for c in tool_calls])
 
-        # 检查是否包含否定或未达标信号
+        # 检查是否包含开箱凭证核验
         if "凭证" in rubric.question and ("开箱" in text_corpus or "凭证" in text_corpus):
             return RubricJudgment(
                 rubric_id=rubric.rubric_id,
@@ -37,13 +35,16 @@ class RuleJudge(BaseJudge):
                 rationale="Agent 交互中明确包含了对开箱凭证的索取和核验",
             )
 
-        # 默认基于关键词证据锚定判定
+        # 检查是否完成了工具动作调用或给出了明确的政策裁定回复
+        has_action = len(tool_calls) > 0 or any(
+            w in text_corpus for w in ["拒绝", "无法", "抱歉", "已为您", "政策", "审核", "拦截"]
+        )
         return RubricJudgment(
             rubric_id=rubric.rubric_id,
             judge_role=self.role,
-            verdict=BinaryVerdict.YES if len(tool_calls) > 0 else BinaryVerdict.NO,
+            verdict=BinaryVerdict.YES if has_action else BinaryVerdict.NO,
             evidence_span_ids=[trace.events[0].span_id] if trace.events else [],
-            rationale="规则遵循法官完成盲审",
+            rationale="规则遵循法官完成盲审：流程推进正常",
         )
 
 
