@@ -9,6 +9,8 @@ from .rubric import (
     BinaryVerdict,
     RubricDispute,
     RubricJudgment,
+    SeverityLevel,
+    UnknownPolicy,
 )
 from .task import (
     TaskConstraint,
@@ -30,6 +32,8 @@ __all__ = [
     "WorldStateExpectation",
     "TaskSpec",
     "BinaryVerdict",
+    "SeverityLevel",
+    "UnknownPolicy",
     "BinaryRubric",
     "RubricJudgment",
     "RubricDispute",
