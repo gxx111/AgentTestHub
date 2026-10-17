@@ -4,14 +4,14 @@
 > 当前分支：feat/agent-release-gate-stages
 > 当前阶段：Stage 0 完成，进入 Stage 1
 > 总进度：1 / 7 阶段
-> 最近 commit：待记录
-> 最近 push：待记录
+> 最近 commit：524c94e
+> 最近 push：origin/feat/agent-release-gate-stages (success)
 
 ## 阶段总览
 
 | 阶段 | 状态 | 完成时间 | Commit | Push | 测试 |
 |---|---|---|---|---|---|
-| Stage 0 环境与模型连通性 | 已完成 | 2026-10-18 10:15 | 待记录 | 待记录 | pytest 44 pass / smoke test pass / web build pass |
+| Stage 0 环境与模型连通性 | 已完成 | 2026-10-18 10:15 | 524c94e | success | pytest 44 pass / smoke test pass / web build pass |
 | Stage 1 可信评测核心 | 未开始 | — | — | — | — |
 | Stage 2 可靠执行 | 未开始 | — | — | — | — |
 | Stage 3 仿真差异化 | 未开始 | — | — | — | — |
@@ -43,7 +43,7 @@
 
 | 阶段 | Commit | Push | 时间 |
 |---|---|---|---|
-| Stage 0 | 待填写 | 待填写 | 2026-10-18 10:15 |
+| Stage 0 | 524c94e | success (origin/feat/agent-release-gate-stages) | 2026-10-18 10:15 |
 
 ## 阻塞与风险
 
