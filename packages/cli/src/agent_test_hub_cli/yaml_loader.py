@@ -22,9 +22,10 @@ class DeclarativeYAMLLoader:
         rubrics = []
         for r in raw_rubrics:
             exp_verdict = BinaryVerdict(r.get("expected_verdict", "YES"))
+            rubric_id = r.get("id") or r.get("rubric_id")
             rubrics.append(
                 BinaryRubric(
-                    rubric_id=r["id"],
+                    rubric_id=rubric_id,
                     dimension=r.get("dimension", "general"),
                     question=r["question"],
                     expected_verdict=exp_verdict,

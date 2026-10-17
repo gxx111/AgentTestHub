@@ -64,7 +64,8 @@ packages = [
     "packages/domain/src/agent_test_hub_domain",
     "packages/sandbox/src/agent_test_hub_sandbox",
     "packages/cli/src/agent_test_hub_cli",
-    "packages/server/src/agent_test_hub_server"
+    "packages/server/src/agent_test_hub_server",
+    "packages/sdk/src/agent_test_hub_sdk"
 ]
 
 [tool.pytest.ini_options]
@@ -76,7 +77,8 @@ pythonpath = [
     "packages/domain/src",
     "packages/sandbox/src",
     "packages/cli/src",
-    "packages/server/src"
+    "packages/server/src",
+    "packages/sdk/src"
 ]
 addopts = "-v --tb=short"
 

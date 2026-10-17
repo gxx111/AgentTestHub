@@ -1,0 +1,44 @@
+name: Agent Release Gate CI
+
+on:
+  pull_request:
+    branches: [main, feat/*]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    name: Evaluate Release Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Pytest Suite
+        run: |
+          pytest tests/ -v --tb=short
+
+      - name: Initialize Quickstart & Run Gate Evaluation
+        run: |
+          ath init -d starter_ci
+          ath eval starter_ci/suite.yaml --output report.json --junit-xml junit.xml --otel-export otel_trace.json
+
+      - name: Check Gate Decision & Post PR Comment
+        if: always()
+        run: |
+          ath gate report.json
