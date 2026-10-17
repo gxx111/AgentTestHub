@@ -1,11 +1,11 @@
 # AgentTestHub 开发进度
 
-> 最后更新：2026-10-18 10:45
+> 最后更新：2026-10-18 11:10
 > 当前分支：feat/agent-release-gate-stages
-> 当前阶段：Stage 1 完成，进入 Stage 2
-> 总进度：2 / 7 阶段
-> 最近 commit：da082f3
-> 最近 push：origin/feat/agent-release-gate-stages (success)
+> 当前阶段：Stage 2 完成，进入 Stage 3
+> 总进度：3 / 7 阶段
+> 最近 commit：待记录
+> 最近 push：待记录
 
 ## 阶段总览
 
@@ -13,49 +13,43 @@
 |---|---|---|---|---|---|
 | Stage 0 环境与模型连通性 | 已完成 | 2026-10-18 10:15 | 524c94e | success | pytest 44 pass / smoke test pass / web build pass |
 | Stage 1 可信评测核心 | 已完成 | 2026-10-18 10:45 | da082f3 | success | pytest 53 pass / golden kappa pass / real model eval pass / web build pass |
-| Stage 2 可靠执行 | 未开始 | — | — | — | — |
+| Stage 2 可靠执行 | 已完成 | 2026-10-18 11:10 | 待记录 | 待记录 | pytest 63 pass / alembic head+base pass / queue & cancel pass / web build pass |
 | Stage 3 仿真差异化 | 未开始 | — | — | — | — |
 | Stage 4 开发者工作流 | 未开始 | — | — | — | — |
 | Stage 5 生产闭环 | 未开始 | — | — | — | — |
 | Stage 6 企业化与最终交付 | 未开始 | — | — | — | — |
 
-## 当前阶段任务 (Stage 1)
+## 当前阶段任务 (Stage 2)
 
 | ID | 任务 | 状态 | 验收标准 | 证据 | 备注 |
 |---|---|---|---|---|---|
-| E5-01 | Evaluator 接口与注册表 | 已完成 | BaseEvaluator/EvaluatorResult 抽象与 EvaluatorRegistry 注册中心 | packages/core/src/agent_test_hub/evaluators/ | 单测覆盖 |
-| E5-02 | 状态差分检查器 (StateDiffEvaluator) | 已完成 | 支持正向断言、负向断言、不变量与变更表白名单 | test_state_diff_evaluator_positive_and_negative | 单测通过 |
-| E5-03 | 工具调用检查器 (ToolCallEvaluator) | 已完成 | 黑白名单、顺序子序列与调用次数预算核验 | test_tool_call_evaluator_order_and_forbidden | 单测通过 |
-| E5-04 | 工具参数 Schema/AST 校验器 | 已完成 | 参数必填与类型校验 | test_tool_arg_evaluator_schema | 单测通过 |
-| E5-05 | SQL 安全语法树检查 (SQLSafetyEvaluator) | 已完成 | sqlglot AST 解析，阻断 DDL、无 WHERE 的 UPDATE/DELETE、底层注入 | test_sql_safety_evaluator_blocks_ddl_and_unbounded_mutation | 单测通过 |
-| E5-06 | 业务策略核验 (BusinessPolicyEvaluator) | 已完成 | 金额上限与状态机核验 | test_business_policy_and_pii_evaluators | 单测通过 |
-| E5-07 | PII 与敏感密钥防泄露 (PIILeakEvaluator) | 已完成 | 正则识别手机号、身份证、API Key、明文密码 | test_business_policy_and_pii_evaluators | 单测通过 |
-| E5-08 | 预算检查器 (BudgetEvaluator) | 已完成 | 耗时与 Token 开销硬预算 | packages/core/src/agent_test_hub/evaluators/deterministic.py | 单测通过 |
-| E6-01 | LLM Judge 重写与证据校验 | 已完成 | 结构化输出、证据 Span 严格锚定、缺失强制 UNKNOWN | packages/core/src/agent_test_hub/judges/committee.py | 单测通过 |
-| E6-04 | 安全 fatal 不可推翻修复 | 已完成 | 修复 tool_guard vs safety_judge bug，任何仲裁路径安全 NO 绝不可翻盘 | test_safety_fatal_veto_cannot_be_overridden_in_arbitration | 核心安全门禁 |
-| E6-08 | 校准指标与黄金集 harness | 已完成 | Cohen's Kappa 计算、混淆矩阵、FPR/FFR；已知坏用例 FPR < 5% | test_calibration_harness_and_golden_set_metrics | 标注非人工标签 |
-| E6-09 | 真实模型端到端评测验收 | 已完成 | smolagents testee + 4角色团队 + 真实 GLM-5.3 产生真实 Trace 与 Span 证据 | scripts/run_real_model_evaluation.py | 物理落盘与裁决通过 |
-| — | 评分契约重构 (Scoring Contract) | 已完成 | 引入 severity, unknown_policy, weight；彻底清除 0/0.5/1 粗分 | runner.py 连续加权评分 | 契约升级 |
+| E1-01 | 建立 packages/domain | 已完成 | 实体、值对象、错误、事件分层清晰 | packages/domain/src/agent_test_hub_domain/ | 独立包架构 |
+| E1-02 | ID/版本/内容哈希规范 | 已完成 | 规范化 ID 生成与 SHA-256 Canonical JSON 不可变内容哈希 | agent_test_hub_domain/ids.py | 单测覆盖 |
+| E1-03 | SQLAlchemy 2 + Alembic 迁移 | 已完成 | alembic upgrade head 空库建表，downgrade base 干净回滚 | test_alembic_upgrade_head_and_downgrade_on_empty_db | 14张核心表全量支持 |
+| E1-04~12 | 核心领域表完整定义 | 已完成 | workspaces, projects, agents, datasets, cases, experiments, runs, samples, verdicts, audit_logs | agent_test_hub_domain/models.py | ORM 关系级联健全 |
+| E1-13 | SQLite → Postgres 迁移脚本 | 已完成 | 读取旧库表并注入新版本化模型，校验行数与哈希，支持 dry-run | scripts/migrate_sqlite_to_postgres.py, test_legacy_sqlite_migration | 演练与真实迁移通过 |
+| E1-14 | 仓储层 Repository 抽象 | 已完成 | WorkspaceRepo, AgentRepo, DatasetRepo, ExperimentRepo, AuditRepo 事务边界封装 | agent_test_hub_domain/repository.py | 杜绝上层裸 SQL |
+| E1-15 | 多租户隔离自动化测试 | 已完成 | 跨租户访问抛出 TenantAccessDeniedError (404 语义隔离) | test_multi_tenant_isolation_raises_access_denied | 安全隔离达成 |
+| E9-02 | 超时熔断与重试机制 | 已完成 | 超过 timeout_seconds 自动熔断并执行可配置重试 | test_timeout_and_retry_mechanism | 队列自动调度 |
+| E9-05 | 幂等 Sample 执行 | 已完成 | 基于 run_id:case_id:index 生成 sample_key，重复写入直接幂等返回 | test_experiment_idempotency_and_cancellation | 杜绝重复计分 |
+| E9-07 | 实验取消机制 | 已完成 | 支持实时取消运行中的实验，排队与运行任务置为 CANCELLED | test_experiment_cancellation_in_queue | 即时生效 |
+| E9-10 | 崩溃恢复机制 | 已完成 | 恢复挂起的 running/pending 任务为重新调度状态 | test_crash_recovery | 崩溃安全恢复 |
 
 ## 测试与构建记录
 
-- pytest：53 passed (in 9.49s)
+- pytest：63 passed (in 9.52s)
 - web build：Next.js 15.5.27 build succeeded
-- 迁移测试：—
-- 模型 smoke test：
-  - Stage 0 smoke test 全绿
-  - Stage 1 `scripts/run_real_model_evaluation.py` 全链路跑通：真实 GLM-5.3 驱动 smolagents 进行订单取消，沙盒物理状态真实更新至 CANCELLED，LLMJudge 引用真实 Span 给出合规裁决与详细理由！
-- 校准指标：
-  - Cohen's Kappa: 1.0 (黄金校准集基线)
-  - False Pass Rate (已知坏用例误放行率): 0.0% (< 5% 门槛达成)
-  - 标签说明：非人工标签，Kappa 仅作工程基线
+- 迁移测试：`test_alembic_upgrade_head_and_downgrade_on_empty_db` (upgrade head -> 14张表建立成功 -> downgrade base 干净回滚 -> 再次 upgrade 成功)
+- 旧库迁移测试：`test_legacy_sqlite_migration` (dry_run 模式回滚成功，真实迁移数据行数与版本映射完整)
+- 队列与并发测试：`test_job_queue_enqueue_dequeue`, `test_timeout_and_retry_mechanism`, `test_experiment_cancellation_in_queue`, `test_crash_recovery` 全部通过
 
 ## Commit / Push 记录
 
 | 阶段 | Commit | Push | 时间 |
 |---|---|---|---|
 | Stage 0 | 524c94e / 6f8ea12 | success (origin/feat/agent-release-gate-stages) | 2026-10-18 10:15 |
-| Stage 1 | da082f3 | success (origin/feat/agent-release-gate-stages) | 2026-10-18 10:45 |
+| Stage 1 | da082f3 / ad5231f | success (origin/feat/agent-release-gate-stages) | 2026-10-18 10:45 |
+| Stage 2 | 待填写 | 待填写 | 2026-10-18 11:10 |
 
 ## 阻塞与风险
 
@@ -65,14 +59,14 @@
 
 ## 下一阶段
 
-- Stage 2: 可靠执行 (P0/P1)
-  - E1: Postgres + SQLAlchemy 2 + Alembic 数据持久化架构（SQLite 保留为本地/CLI/单测）
-  - E9: 任务队列、超时控制、取消机制、幂等 Sample、崩溃恢复
-  - SQLite → Postgres 迁移脚本与测试
+- Stage 3: 仿真差异化 (P1)
+  - E7: Docker 沙盒驱动接口、只读 rootfs、非 root、快照与回滚、故障注入引擎 (网络拒绝/延迟/错误)
+  - E8: 双控用户模拟器 + 红队攻击库 (提示注入/工具越权/MCP投毒)
+  - 2 个垂直业务场景包 (如金融电商核验与企业运维)
 
 ## 假设与决策记录
 
-- 确定性检查器优先于 LLM 裁判执行，所有高危 DDL、无条件全表修改与 PII 泄露直接阻断。
-- 评分契约使用基于 weight × severity 的连续加权分值，消除了 0/0.5/1 粗暴分值。
-- 校准集当前使用结构化可复核的工程黄金集，明确标注“非人工标签，Kappa 仅作工程基线”。
+- 引入 SQLAlchemy 2 + Alembic 作为通用数据库持久化基座，PostgreSQL 用于生产与多租户 SaaS，SQLite 保留用于本地极速单测与 CLI 独立运行。
+- Sample 执行使用唯一的 `sample_key` (`run_id:case_id:sample_index`) 强一致性约束，杜绝分布式或重试并发下的重复计分。
+
 

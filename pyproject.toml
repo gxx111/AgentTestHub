@@ -42,6 +42,8 @@ dependencies = [
     "click>=8.1.7",
     "rich>=13.7.1",
     "sqlglot>=20.0.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
 ]
 
 [project.optional-dependencies]
@@ -59,6 +61,7 @@ agent-eval = "agent_test_hub_cli.main:cli"
 [tool.hatch.build.targets.wheel]
 packages = [
     "packages/core/src/agent_test_hub",
+    "packages/domain/src/agent_test_hub_domain",
     "packages/sandbox/src/agent_test_hub_sandbox",
     "packages/cli/src/agent_test_hub_cli",
     "packages/server/src/agent_test_hub_server"
@@ -70,6 +73,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 pythonpath = [
     "packages/core/src",
+    "packages/domain/src",
     "packages/sandbox/src",
     "packages/cli/src",
     "packages/server/src"
