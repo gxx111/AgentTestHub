@@ -1,0 +1,9 @@
+apiVersion: v2
+name: agent-test-hub
+description: Helm Chart for AgentTestHub - Enterprise Agent Release Gate Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: AgentTestHub Architecture Group
+    email: dev@agenttesthub.io

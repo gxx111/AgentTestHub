@@ -1,0 +1,37 @@
+replicaCount: 2
+
+image:
+  repository: registry.internal.corp/agent-test-hub/api
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: ath.internal.corp
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2048Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+env:
+  DATABASE_URL: "postgresql://ath_admin:ath_password@postgres:5432/agent_test_hub"
+  REDIS_URL: "redis://redis:6379/0"
