@@ -1,5 +1,5 @@
 from .base import BaseSandbox, FaultSpec, StateDelta, StateSnapshot
-from .docker_sandbox import DockerSandbox
+from .docker_sandbox import DockerSandbox, DockerSecurityConfig, FaultInjectionRecord
 from .mcp_proxy import MCPProxy, MCPToolSchema
 from .sqlite_sandbox import SQLiteSandbox
 
@@ -10,6 +10,8 @@ __all__ = [
     "StateSnapshot",
     "SQLiteSandbox",
     "DockerSandbox",
+    "DockerSecurityConfig",
+    "FaultInjectionRecord",
     "MCPProxy",
     "MCPToolSchema",
 ]
