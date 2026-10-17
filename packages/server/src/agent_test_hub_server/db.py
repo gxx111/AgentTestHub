@@ -143,6 +143,18 @@ def init_db() -> None:
     );
     """)
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS evaluation_teams (
+        id TEXT PRIMARY KEY,
+        workspace_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        config_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (workspace_id) REFERENCES workspaces(id)
+    );
+    """)
+
     # 6. 评测运行历史表 (Evaluation Runs)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS eval_runs (

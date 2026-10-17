@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import datetime
 import hashlib
 import importlib.metadata
 import importlib.util
+import inspect
 import json
 import math
 import platform
@@ -14,15 +16,25 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 from agent_test_hub.adapters import LiteLLMAgentAdapter
+from agent_test_hub.evaluation_client import EvaluationClient
 from agent_test_hub.examiners import UserSimulator
+from agent_test_hub.examiners.llm_simulator import (
+    CoordinatedExaminer,
+    LLMRedTeamAttacker,
+    LLMUserSimulator,
+)
+from agent_test_hub.judges import JudicialCommittee, LLMJudge, LLMModerator
 from agent_test_hub.runner import EvaluationRunner
 from agent_test_hub.schemas import (
+    ActorRole,
     BinaryRubric,
     ExecutionTrace,
     TaskConstraint,
     TaskSpec,
+    ToolCallObservation,
     ToolDefinition,
     TraceEvent,
+    TraceEventType,
     WorldStateExpectation,
 )
 from agent_test_hub_sandbox import SQLiteSandbox
@@ -36,6 +48,8 @@ def canonical_json(value: Any) -> str:
 
 def _secret_key(key: str) -> bool:
     normalized = "".join(char for char in key.lower() if char.isalnum())
+    if normalized == "apikeyconfigured":
+        return False
     if normalized in (
         "totaltokens",
         "tokensconsumed",
@@ -130,7 +144,7 @@ def engine_manifest() -> dict[str, Any]:
         if spec and spec.origin:
             hashes[name] = hashlib.sha256(Path(spec.origin).read_bytes()).hexdigest()
     versions = {}
-    for name in ("pydantic", "litellm", "fastapi"):
+    for name in ("pydantic", "litellm", "fastapi", "smolagents"):
         try:
             versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
@@ -143,6 +157,7 @@ def evaluate_case(
     agent: dict[str, Any],
     dataset: dict[str, Any],
     policy: dict[str, Any] | None,
+    evaluation_team: dict[str, Any] | None = None,
     event_callback: Callable[[TraceEvent], None] | None = None,
 ) -> dict[str, Any]:
     config = json.loads(agent.get("config_json") or "{}")
@@ -167,6 +182,8 @@ def evaluate_case(
         )
     ]
     max_turns = policy["watchdog_max_turns"] if policy and policy["enable_watchdog"] else 6
+    if evaluation_team:
+        max_turns = evaluation_team["max_turns"]
     task = TaskSpec(
         task_id=case["id"],
         scenario_id=dataset["id"],
@@ -180,16 +197,185 @@ def evaluate_case(
             for state in json.loads(case.get("expected_state_json") or "[]")
         ],
     )
-    examiner = UserSimulator(
-        persona=policy["user_sim_persona"] if policy else "业务核验用户",
-        initial_message=case["prompt"],
-        hidden_goals=json.loads(policy.get("hidden_goals_json") or "[]")
-        if policy
-        else ["业务前置凭证"],
-        clarification_triggers={"凭证": "已补充提供核验材料"},
-        max_turns=max_turns,
+    team_members = {
+        member["role"]: member
+        for member in (evaluation_team or {}).get("members", [])
+        if member.get("enabled", True)
+    }
+    evaluation_client = None
+    if evaluation_team:
+        evaluation_client = EvaluationClient(
+            max_calls=evaluation_team.get("max_calls", 30),
+            deadline_seconds=evaluation_team.get("timeout_seconds", 30)
+            * max(1, evaluation_team.get("max_turns", max_turns)),
+        )
+        evaluation_client.bind(event_callback)
+    user_member = team_members.get("user_simulator")
+    if user_member:
+        examiner_core = LLMUserSimulator(
+            model=user_member["model"],
+            api_base=user_member["api_base"],
+            api_key=user_member.get("api_key", ""),
+            persona=policy["user_sim_persona"] if policy else "真实业务用户",
+            initial_message=case["prompt"],
+            hidden_goals=json.loads(policy.get("hidden_goals_json") or "[]")
+            if policy
+            else ["业务前置凭证"],
+            max_turns=min(max_turns, evaluation_team.get("max_turns", max_turns)),
+            timeout_seconds=evaluation_team.get("timeout_seconds", 30),
+            complete=evaluation_client.for_role("user_simulator")
+            if evaluation_client
+            else None,
+            task_description=case.get("description") or "",
+        )
+    else:
+        examiner_core = UserSimulator(
+            persona=policy["user_sim_persona"] if policy else "业务核验用户",
+            initial_message=case["prompt"],
+            hidden_goals=json.loads(policy.get("hidden_goals_json") or "[]")
+            if policy
+            else ["业务前置凭证"],
+            clarification_triggers={"凭证": "已补充提供核验材料"},
+            max_turns=max_turns,
+        )
+    red_team_member = team_members.get("red_team_attacker")
+    red_team = (
+        LLMRedTeamAttacker(
+            model=red_team_member["model"],
+            api_base=red_team_member["api_base"],
+            api_key=red_team_member.get("api_key", ""),
+            timeout_seconds=evaluation_team.get("timeout_seconds", 30),
+            complete=evaluation_client.for_role("red_team_attacker")
+            if evaluation_client
+            else None,
+        )
+        if red_team_member
+        else None
     )
-    if agent["agent_type"] == "litellm":
+    examiner = CoordinatedExaminer(
+        user_simulator=examiner_core,
+        red_team=red_team,
+        case_category=case.get("category", ""),
+        case_title=case["title"],
+        case_prompt=case["prompt"],
+        client=evaluation_client,
+    )
+    if agent["agent_type"] == "smolagents":
+        try:
+            from smolagents import OpenAIServerModel, Tool, ToolCallingAgent
+        except ImportError as exc:
+            raise ValueError(
+                "smolagents runtime is not installed; install the project runtime dependencies"
+            ) from exc
+
+        smol_tools = []
+        tool_events = []
+        for tool_definition in task.available_tools:
+            schema = tool_definition.parameters_schema or {}
+            properties = schema.get("properties", {})
+            required = set(schema.get("required", []))
+            input_schema = {
+                name: {
+                    "type": value.get("type", "string"),
+                    "description": value.get("description", name),
+                    **({"nullable": True} if name not in required else {}),
+                }
+                for name, value in properties.items()
+            }
+
+            def make_forward(name: str, inputs: dict[str, dict[str, Any]]):
+                def forward(self, **kwargs: Any) -> str:
+                    started = datetime.datetime.now(datetime.timezone.utc)
+                    result = sandbox.execute_tool(name, kwargs)
+                    duration_ms = (
+                        datetime.datetime.now(datetime.timezone.utc) - started
+                    ).total_seconds() * 1000.0
+                    tool_event = TraceEvent(
+                                actor_role=ActorRole.TOOL_SANDBOX,
+                                actor_name="smolagents-sandbox",
+                                event_type=TraceEventType.TOOL_CALL_RESPONSE,
+                                content=json.dumps(result, ensure_ascii=False),
+                                tool_observation=ToolCallObservation(
+                                    tool_name=name,
+                                    arguments=kwargs,
+                                    output=result,
+                                    is_error=result.get("status") == "error",
+                                    duration_ms=duration_ms,
+                                ),
+                            )
+                    tool_events.append(tool_event)
+                    if event_callback:
+                        event_callback(tool_event)
+                    return json.dumps(result, ensure_ascii=False)
+
+                forward.__signature__ = inspect.Signature(
+                    parameters=[
+                        inspect.Parameter(
+                            "self",
+                            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                        ),
+                        *[
+                        inspect.Parameter(
+                            parameter_name,
+                            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                            annotation=(str | None) if inputs[parameter_name].get("nullable") else str,
+                            default=None if inputs[parameter_name].get("nullable") else inspect.Parameter.empty,
+                        )
+                        for parameter_name in inputs
+                        ],
+                    ]
+                )
+                return forward
+
+            tool_class = type(
+                f"AgentTestHubTool_{tool_definition.name}",
+                (Tool,),
+                {
+                    "name": tool_definition.name,
+                    "description": tool_definition.description,
+                    "inputs": input_schema,
+                    "output_type": "string",
+                    "forward": make_forward(tool_definition.name, input_schema),
+                },
+            )
+            smol_tools.append(tool_class())
+
+        model = OpenAIServerModel(
+            model_id=agent["model_name"],
+            api_base=config.get("api_base"),
+            api_key=config.get("api_key"),
+            temperature=config.get("temperature", 0.0),
+        )
+        smol_agent = ToolCallingAgent(
+            tools=smol_tools,
+            model=model,
+            max_steps=min(max_turns, 4),
+        )
+
+        def testee(prompt: str, trace: ExecutionTrace) -> dict[str, Any]:
+            initial_tool_count = len(tool_events)
+            result = smol_agent.run(
+                prompt,
+                reset=False,
+                max_steps=min(max_turns, 4),
+                return_full_result=True,
+            )
+            output = getattr(result, "output", result)
+            trace.events.extend(tool_events[initial_tool_count:])
+            token_usage = getattr(result, "token_usage", None)
+            metadata = {}
+            if token_usage is not None:
+                metadata = {
+                    "input_tokens": getattr(token_usage, "input_tokens", 0),
+                    "output_tokens": getattr(token_usage, "output_tokens", 0),
+                }
+            return {
+                "response": str(output or ""),
+                "tool_calls": [],
+                "metadata": {"runtime": "smolagents", **metadata},
+            }
+
+    elif agent["agent_type"] == "litellm":
         adapter = LiteLLMAgentAdapter(
             model=agent["model_name"],
             system_prompt=agent.get("system_prompt") or "你是一个专业的智能助理。",
@@ -260,8 +446,59 @@ def evaluate_case(
     try:
         if dataset.get("init_sql"):
             sandbox.initialize([dataset["init_sql"]])
+        committee = None
+        if "business_judge" in team_members and "safety_judge" in team_members:
+            business = team_members["business_judge"]
+            safety = team_members["safety_judge"]
+            moderator_member = team_members.get("moderator")
+            committee = JudicialCommittee(
+                judges=[
+                    LLMJudge(
+                        role="business_judge",
+                        model=business["model"],
+                        api_base=business["api_base"],
+                        api_key=business.get("api_key", ""),
+                        timeout_seconds=evaluation_team.get("timeout_seconds", 30),
+                        complete=evaluation_client.for_role("business_judge")
+                        if evaluation_client
+                        else None,
+                        task_description=case.get("description") or "",
+                    ),
+                    LLMJudge(
+                        role="safety_judge",
+                        model=safety["model"],
+                        api_base=safety["api_base"],
+                        api_key=safety.get("api_key", ""),
+                        timeout_seconds=evaluation_team.get("timeout_seconds", 30),
+                        complete=evaluation_client.for_role("safety_judge")
+                        if evaluation_client
+                        else None,
+                        task_description=case.get("description") or "",
+                    ),
+                ],
+                moderator=(
+                    LLMModerator(
+                        role="moderator",
+                        model=moderator_member["model"],
+                        api_base=moderator_member["api_base"],
+                        api_key=moderator_member.get("api_key", ""),
+                        timeout_seconds=evaluation_team.get("timeout_seconds", 30),
+                        complete=evaluation_client.for_role("moderator")
+                        if evaluation_client
+                        else None,
+                        task_description=case.get("description") or "",
+                    )
+                    if moderator_member
+                    else None
+                ),
+                client=evaluation_client,
+            )
+        if evaluation_client:
+            examiner.bind(event_callback)
+            if committee:
+                committee.bind(event_callback)
         return (
-            EvaluationRunner(sandbox=sandbox)
+            EvaluationRunner(sandbox=sandbox, committee=committee)
             .run_task(
                 task=task,
                 examiner=examiner,

@@ -48,6 +48,7 @@ class RubricJudgment(BaseModel):
     )
     rationale: str = Field(description="判定理由与事实陈述")
     confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="法官自评置信度")
+    model_name: str | None = Field(default=None, description="裁判模型标识；不包含凭证")
 
 
 class RubricDispute(BaseModel):
@@ -64,3 +65,6 @@ class RubricDispute(BaseModel):
         default=None, description="合议庭最终收敛裁决"
     )
     moderator_verdict_rationale: str = Field(default="", description="合议庭首席裁决仲裁理由")
+    moderator_evidence_span_ids: list[str] = Field(
+        default_factory=list, description="仲裁引用的原始执行 Span"
+    )

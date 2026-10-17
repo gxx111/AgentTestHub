@@ -34,10 +34,11 @@ from .experiments import (
     evaluate_case,
     sanitize_snapshot,
 )
+from .teams import load_team, team_router
 
 app = FastAPI(
     title="AgentTestHub Enterprise Server",
-    description="Next-Gen Universal Multi-Agent Collaborative Evaluation Platform API",
+    description="Agent Release Gate API: reproducible simulation, evidence-backed evaluation and CI gating",
     version="0.2.0",
 )
 
@@ -62,10 +63,39 @@ _LIVE_EVALUATION_STREAMS: dict[str, dict[str, Any]] = {}
 init_db()
 
 
+def _recover_interrupted_evaluations() -> None:
+    """将服务重启前遗留的运行标记为失败，避免前端永久显示执行中。"""
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            """
+            UPDATE eval_runs
+            SET status = 'failed',
+                summary_json = ?,
+                report_json = COALESCE(report_json, '[]')
+            WHERE status = 'running'
+            """,
+            (canonical_json({"error": "server_restart_interrupted"}),),
+        )
+        conn.execute(
+            """
+            UPDATE eval_experiments
+            SET status = 'failed',
+                summary_json = ?
+            WHERE status = 'running'
+            """,
+            (canonical_json({"error": "server_restart_interrupted"}),),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 @app.on_event("startup")
 def on_startup():
     """启动时初始化数据库与默认数据"""
     init_db()
+    _recover_interrupted_evaluations()
 
 
 # -------------------------------------------------------------
@@ -129,6 +159,9 @@ def _require_workspace(user: dict[str, Any], workspace_id: str, write: bool = Fa
     if write and role not in {"owner", "admin", "engineer"}:
         raise HTTPException(status_code=403, detail="当前角色没有写入权限")
     return role
+
+
+app.include_router(team_router(_request_user, _require_workspace))
 
 
 def _issue_session(user_id: str) -> str:
@@ -924,12 +957,15 @@ class UniversalRunRequest(BaseModel):
     agent_id: str
     dataset_id: str
     policy_id: str | None = None
+    evaluation_team_id: str | None = None
     case_id: str | None = None
     repetitions: int = Field(default=1, ge=1, le=20, strict=True)
     stream_id: str | None = Field(default=None, min_length=8, max_length=80)
 
 
-def _stream_event(stream_id: str, event: TraceEvent, **metadata: Any) -> None:
+def _stream_event(
+    stream_id: str, event: TraceEvent, secrets: list[str] | None = None, **metadata: Any
+) -> None:
     """Store real runner events for the live UI without exposing credentials."""
     stream = _LIVE_EVALUATION_STREAMS.get(stream_id)
     if stream is None:
@@ -937,12 +973,15 @@ def _stream_event(stream_id: str, event: TraceEvent, **metadata: Any) -> None:
     stream["events"].append(
         sanitize_snapshot(
             {
+                "api_keys": secrets or [],
+                "payload": {
                 "event": event.model_dump(mode="json"),
                 "repetition_index": metadata.get("repetition_index"),
                 "case_id": metadata.get("case_id"),
                 "case_title": metadata.get("case_title"),
+                },
             }
-        )
+        )["payload"]
     )
     stream["updated_at"] = _utc_now().isoformat()
 
@@ -985,6 +1024,11 @@ def run_universal_evaluation(
             if not row:
                 raise HTTPException(status_code=404, detail="评测策略不存在")
             policy = dict(row)
+        evaluation_team = (
+            load_team(req.evaluation_team_id, req.workspace_id, conn, decrypt=True)
+            if req.evaluation_team_id
+            else None
+        )
         query = "SELECT * FROM test_cases WHERE dataset_id = ?"
         params = [req.dataset_id]
         if req.case_id:
@@ -1003,20 +1047,51 @@ def run_universal_evaluation(
             "dataset": dataset,
             "cases": cases,
             "policy": policy,
+            "evaluation_team": {
+                "id": evaluation_team["id"],
+                "name": evaluation_team["name"],
+                "members": [
+                    {
+                        "role": member["role"],
+                        "model": member["model"],
+                        "api_base": member["api_base"],
+                        "enabled": member["enabled"],
+                        "api_key_configured": bool(member.get("api_key")),
+                    }
+                    for member in evaluation_team["members"]
+                ],
+                "max_turns": evaluation_team["max_turns"],
+                "timeout_seconds": evaluation_team["timeout_seconds"],
+                "max_calls": evaluation_team["max_calls"],
+            }
+            if evaluation_team
+            else None,
             "selection": {"case_id": req.case_id},
             "engine": engine_manifest(),
             "execution": {
                 "runner": "EvaluationRunner",
                 "repetitions": req.repetitions,
-                "max_turns": policy["watchdog_max_turns"]
+                "max_turns": evaluation_team["max_turns"] if evaluation_team else policy["watchdog_max_turns"]
                 if policy and policy["enable_watchdog"]
                 else 6,
-                "judge_type": "rule_heuristics",
-                "judges": ["RuleJudge", "SafetyJudge"],
+                "judge_type": "configured_multi_agent" if evaluation_team else "deterministic_heuristics",
+                "judges": [
+                    member["role"]
+                    for member in evaluation_team["members"]
+                    if member["enabled"]
+                ]
+                if evaluation_team
+                else ["RuleJudge", "SafetyJudge"],
                 "clarification_triggers": {"凭证": "已补充提供核验材料"},
-                "red_team_applied": False,
+                "red_team_applied": bool(
+                    evaluation_team
+                    and any(
+                        member["role"] == "red_team_attacker" and member["enabled"]
+                        for member in evaluation_team["members"]
+                    )
+                ),
                 "model_determinism_guaranteed": False,
-                "unsupported_policy_fields": ["enable_red_team", "red_team_intensity"],
+                "unsupported_policy_fields": [],
                 "mock_uses_expected_state": agent["agent_type"] == "mock"
                 or (
                     agent["agent_type"] == "single"
@@ -1104,9 +1179,14 @@ def run_universal_evaluation(
                     agent,
                     dataset,
                     policy,
+                    evaluation_team=evaluation_team,
                     event_callback=lambda event, rep=repetition, selected_case=case: _stream_event(
                         stream_id,
                         event,
+                        secrets=[
+                            member.get("api_key", "")
+                            for member in (evaluation_team or {}).get("members", [])
+                        ],
                         repetition_index=rep,
                         case_id=selected_case["id"],
                         case_title=selected_case["title"],
@@ -1130,7 +1210,11 @@ def run_universal_evaluation(
                     },
                 )
             sample["duration_ms"] = (time.perf_counter() - start) * 1000
-            sample = sanitize_snapshot({"config_json": agent.get("config_json"), "sample": sample})[
+            sample = sanitize_snapshot({
+                "config_json": agent.get("config_json"),
+                "evaluation_team": evaluation_team,
+                "sample": sample,
+            })[
                 "sample"
             ]
             case_results.append(sample)

@@ -13,6 +13,7 @@ class ExaminerAction(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     action_type: str = Field(description="speak / attack / inject_fault / terminate")
+    actor_role: str | None = None
     content: str = Field(default="", description="交互回复消息或攻击 Prompt")
     internal_state: dict[str, Any] = Field(
         default_factory=dict, description="考官当前内部状态机快照"

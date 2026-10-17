@@ -16,6 +16,9 @@ class ActorRole(str, Enum):
     TESTEE_AGENT = "testee_agent"  # 被测主体 Agent
     WATCHDOG = "watchdog"  # 考官: 环境监考与故障注入官
     TOOL_SANDBOX = "tool_sandbox"  # 沙盒工具执行器
+    BUSINESS_JUDGE = "business_judge"
+    SAFETY_JUDGE = "safety_judge"
+    MODERATOR = "moderator"
 
 
 class TraceEventType(str, Enum):
@@ -28,6 +31,9 @@ class TraceEventType(str, Enum):
     TOOL_CALL_RESPONSE = "tool_call_response"
     FAULT_INJECTED = "fault_injected"
     STATE_SNAPSHOT = "state_snapshot"
+    EVALUATOR_CALL = "evaluator_call"
+    JUDGE_VERDICT = "judge_verdict"
+    ARBITRATION = "arbitration"
 
 
 class ToolCallObservation(BaseModel):

@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "AgentTestHub | Agent 评测工作台",
-  description: "多团队 Agent 质量评测、运行追踪与数据集管理工作台",
+  title: "AgentTestHub · Agent 发布门禁",
+  description:
+    "用可复现的仿真环境、带证据的轨迹裁决和 CI 集成，在发布前回答这个 Agent 版本能不能上线。",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

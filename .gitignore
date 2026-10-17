@@ -30,6 +30,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local scratch
+.tmp_ocr/
+test-temp-stage3/
+tmp_*.db
+
 # Testing & Coverage
 .tox/
 .nox/
@@ -75,3 +80,4 @@ pnpm-debug.log*
 *~
 .DS_Store
 Thumbs.db
+*.db.key

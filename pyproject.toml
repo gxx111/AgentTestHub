@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "agent-test-hub"
 version = "0.1.0"
-description = "Enterprise & Frontier Multi-Agent Collaborative Agent Evaluation Platform"
+description = "Agent Release Gate: reproducible simulation and evidence-backed evaluation for enterprise agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
@@ -35,6 +35,8 @@ classifiers = [
 dependencies = [
     "pydantic>=2.6.0",
     "litellm>=1.40.0",
+    "cryptography>=43.0.0",
+    "smolagents>=1.26.0",
     "networkx>=3.2.0",
     "pyyaml>=6.0.1",
     "click>=8.1.7",

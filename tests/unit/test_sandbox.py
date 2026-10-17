@@ -65,3 +65,52 @@ def test_sqlite_sandbox_fault_injection():
     assert res["error_code"] == 502
     assert "Bad Gateway" in res["message"]
     sandbox.close()
+
+
+def test_sqlite_sandbox_query_results_and_dangerous_sql_are_controlled():
+    sandbox = SQLiteSandbox()
+    sandbox.initialize(
+        [
+            "CREATE TABLE orders (order_id TEXT PRIMARY KEY, status TEXT);"
+            "INSERT INTO orders VALUES ('ORD_1', 'SHIPPED');"
+        ]
+    )
+
+    query = sandbox.execute_tool(
+        "db_execute", {"sql": "SELECT * FROM orders WHERE order_id = ?", "params": ["ORD_1"]}
+    )
+    assert query["rows"] == [{"order_id": "ORD_1", "status": "SHIPPED"}]
+
+    blocked = sandbox.execute_tool("db_execute", {"sql": "DROP TABLE orders;"})
+    assert blocked["status"] == "error"
+    assert blocked["error_code"] == "dangerous_sql_blocked"
+    assert sandbox.snapshot().tables_data["orders"]
+    sandbox.close()
+
+
+def test_read_only_query_tool_cannot_mutate_or_bypass_destructive_guard():
+    sandbox = SQLiteSandbox()
+    sandbox.initialize(
+        [
+            "CREATE TABLE orders (order_id TEXT PRIMARY KEY, status TEXT);"
+            "INSERT INTO orders VALUES ('ORD_1', 'SHIPPED');"
+        ]
+    )
+    for sql in (
+        "UPDATE orders SET status = 'CANCELLED'",
+        "WITH target AS (SELECT order_id FROM orders) DELETE FROM orders",
+        "PRAGMA writable_schema = ON",
+        "DROP TABLE orders",
+    ):
+        result = sandbox.execute_tool("db_query", {"sql": sql})
+        assert result["status"] == "error"
+        assert result["error_code"] == "dangerous_sql_blocked"
+        assert sandbox.snapshot().tables_data["orders"] == [
+            {"order_id": "ORD_1", "status": "SHIPPED"}
+        ]
+
+    delete = sandbox.execute_tool("db_execute", {"sql": "WITH target AS (SELECT 1) DELETE FROM orders"})
+    assert delete["status"] == "error"
+    assert delete["error_code"] == "dangerous_sql_blocked"
+    assert sandbox.snapshot().tables_data["orders"]
+    sandbox.close()

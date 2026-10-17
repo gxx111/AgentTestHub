@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .rubric import RubricJudgment
+from .rubric import RubricDispute, RubricJudgment
 from .trace import ExecutionTrace
 
 
@@ -52,6 +52,7 @@ class TaskEvaluationResult(BaseModel):
     unknown_rubric_count: int = Field(
         default=0, description="被判为 UNKNOWN 的检查项数量 (大于0触发模糊告警)"
     )
+    rubric_disputes: list[RubricDispute] = Field(default_factory=list)
 
     # 归因树 (仅在未通过时产出)
     attribution_tree: list[AttributionNode] = Field(

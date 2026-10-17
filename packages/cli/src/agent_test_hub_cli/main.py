@@ -15,7 +15,7 @@ console = Console()
 
 @click.group()
 def cli():
-    """AgentTestHub - 行业领先的下一代多智能体协作式 Agent 评测平台"""
+    """AgentTestHub - 企业 Agent 的发布门禁（Agent Release Gate）"""
     pass
 
 

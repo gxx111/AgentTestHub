@@ -2,57 +2,45 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/hooks/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        obsidian: {
-          950: "#050608",
-          900: "#090A0F",
-          850: "#0F111A",
-          800: "#161926",
-          700: "#22273B",
+        app: {
+          bg: "#f6f7f9",
+          surface: "#ffffff",
+          subtle: "#f9fafb",
+          line: "#e5e7eb",
+          lineStrong: "#d1d5db",
+          text: "#0f172a",
+          muted: "#64748b",
         },
-        cyber: {
-          cyan: "#00F2FE",
-          azure: "#4FACFE",
+        sidebar: {
+          DEFAULT: "#0b1220",
+          subtle: "#111a2e",
+          line: "#1e293b",
+          muted: "#94a3b8",
         },
-        emerald: {
-          pulse: "#00E676",
-        },
-        crimson: {
-          hazard: "#FF0055",
-        },
-        amber: {
-          flame: "#FF9900",
-        },
-        violet: {
-          verdict: "#7928CA",
-          neon: "#B829EA",
+        brand: {
+          DEFAULT: "#2563eb",
+          hover: "#1d4ed8",
+          soft: "#eff6ff",
         },
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)", "monospace"],
-      },
-      animation: {
-        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "glow-cyan": "glowCyan 2s ease-in-out infinite alternate",
-        "glow-red": "glowRed 2s ease-in-out infinite alternate",
-      },
-      keyframes: {
-        glowCyan: {
-          "0%": { boxShadow: "0 0 5px rgba(0, 242, 254, 0.2)" },
-          "100%": { boxShadow: "0 0 20px rgba(0, 242, 254, 0.6)" },
-        },
-        glowRed: {
-          "0%": { boxShadow: "0 0 5px rgba(255, 0, 85, 0.2)" },
-          "100%": { boxShadow: "0 0 20px rgba(255, 0, 85, 0.6)" },
-        },
+        sans: [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Microsoft YaHei",
+          "sans-serif",
+        ],
+        mono: ["ui-monospace", "SFMono-Regular", "Consolas", "monospace"],
       },
     },
   },

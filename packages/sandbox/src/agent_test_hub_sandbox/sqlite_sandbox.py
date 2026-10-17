@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import datetime
 import random
+import re
 import sqlite3
 import time
 import uuid
@@ -13,6 +14,36 @@ from .base import BaseSandbox, FaultSpec, StateDelta, StateSnapshot
 
 class SQLiteSandbox(BaseSandbox):
     """基于 SQLite 的轻量高保真数字孪生沙盒，支持毫秒级快照与物理差分审计"""
+
+    _DESTRUCTIVE_ACTIONS = {
+        sqlite3.SQLITE_DELETE,
+        sqlite3.SQLITE_DROP_INDEX,
+        sqlite3.SQLITE_DROP_TABLE,
+        sqlite3.SQLITE_DROP_TEMP_INDEX,
+        sqlite3.SQLITE_DROP_TEMP_TABLE,
+        sqlite3.SQLITE_DROP_TEMP_TRIGGER,
+        sqlite3.SQLITE_DROP_TEMP_VIEW,
+        sqlite3.SQLITE_DROP_TRIGGER,
+        sqlite3.SQLITE_DROP_VIEW,
+        sqlite3.SQLITE_ALTER_TABLE,
+        sqlite3.SQLITE_ATTACH,
+        sqlite3.SQLITE_DETACH,
+    }
+    _QUERY_WRITE_ACTIONS = _DESTRUCTIVE_ACTIONS | {
+        sqlite3.SQLITE_INSERT,
+        sqlite3.SQLITE_UPDATE,
+        sqlite3.SQLITE_CREATE_INDEX,
+        sqlite3.SQLITE_CREATE_TABLE,
+        sqlite3.SQLITE_CREATE_TEMP_INDEX,
+        sqlite3.SQLITE_CREATE_TEMP_TABLE,
+        sqlite3.SQLITE_CREATE_TEMP_TRIGGER,
+        sqlite3.SQLITE_CREATE_TEMP_VIEW,
+        sqlite3.SQLITE_CREATE_TRIGGER,
+        sqlite3.SQLITE_CREATE_VIEW,
+        sqlite3.SQLITE_CREATE_VTABLE,
+        sqlite3.SQLITE_DROP_VTABLE,
+        sqlite3.SQLITE_PRAGMA,
+    }
 
     def __init__(self, db_path: str = ":memory:"):
         self.db_path = db_path
@@ -133,19 +164,48 @@ class SQLiteSandbox(BaseSandbox):
         # 2. 内置通用 SQL 执行工具与标准操作分发
         if tool_name == "db_query":
             sql = arguments.get("sql", "")
-            cursor = self._conn.cursor()
-            cursor.execute(sql)
-            rows = [dict(r) for r in cursor.fetchall()]
-            return {"status": "success", "rows": rows}
+            return self._execute_sql(sql, [], read_only=True)
         elif tool_name == "db_execute":
             sql = arguments.get("sql", "")
             params = arguments.get("params", [])
-            cursor = self._conn.cursor()
-            cursor.execute(sql, params)
-            self._conn.commit()
-            return {"status": "success", "rows_affected": cursor.rowcount}
+            normalized = re.sub(r"\s+", " ", sql.strip()).lower()
+            if normalized.startswith(("select ", "with ", "pragma ", "explain ")):
+                return self._execute_sql(sql, params, read_only=True)
+            if normalized.startswith(("drop ", "delete ", "alter ", "truncate ", "attach ", "detach ")):
+                return {
+                    "status": "error",
+                    "error_code": "dangerous_sql_blocked",
+                    "message": "Destructive SQL is blocked by the evaluation sandbox.",
+                }
+            return self._execute_sql(sql, params, read_only=False)
 
         return {"status": "error", "message": f"Tool '{tool_name}' not implemented in sandbox"}
+
+    def _execute_sql(self, sql: str, params: list[Any], read_only: bool) -> dict[str, Any]:
+        denied_actions = self._QUERY_WRITE_ACTIONS if read_only else self._DESTRUCTIVE_ACTIONS
+
+        def authorize(action, _arg1, _arg2, _database, _source):
+            return sqlite3.SQLITE_DENY if action in denied_actions else sqlite3.SQLITE_OK
+
+        self._conn.set_authorizer(authorize)
+        try:
+            cursor = self._conn.cursor()
+            cursor.execute(sql, params)
+            if cursor.description is not None:
+                rows = [dict(row) for row in cursor.fetchmany(50)]
+                return {"status": "success", "rows": rows, "row_count": len(rows)}
+            self._conn.commit()
+            return {"status": "success", "rows_affected": cursor.rowcount}
+        except sqlite3.DatabaseError as exc:
+            self._conn.rollback()
+            error_code = (
+                "dangerous_sql_blocked"
+                if "not authorized" in str(exc).lower()
+                else type(exc).__name__
+            )
+            return {"status": "error", "error_code": error_code}
+        finally:
+            self._conn.set_authorizer(None)
 
     def close(self) -> None:
         """关闭数据库连接"""
