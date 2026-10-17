@@ -4,8 +4,8 @@
 > 当前分支：feat/agent-release-gate-stages
 > 当前阶段：Stage 5 完成，进入 Stage 6
 > 总进度：6 / 7 阶段
-> 最近 commit：待记录
-> 最近 push：待记录
+> 最近 commit：d7461d4
+> 最近 push：origin/feat/agent-release-gate-stages (success)
 
 ## 阶段总览
 
@@ -16,7 +16,7 @@
 | Stage 2 可靠执行 | 已完成 | 2026-10-18 11:10 | 57cbe8a | success | pytest 63 pass / alembic head+base pass / queue & cancel pass / web build pass |
 | Stage 3 仿真差异化 | 部分阻塞完成 (completed_with_blockers) | 2026-10-18 11:35 | 6cb9c4d | success | pytest 68 pass / 2个场景包跑通 / 故障注入复现 / 双控环境操作通过 |
 | Stage 4 开发者工作流 | 已完成 | 2026-10-18 11:55 | 716088a | success | pytest 73 pass / SDK本地评测 / 门禁阻断与PR评论 / OTel导出 / web build pass |
-| Stage 5 生产闭环 | 已完成 | 2026-10-18 12:15 | 待记录 | 待记录 | pytest 76 pass / 生产Trace自动评分 / 失败回流数据集 / 双人盲审与校准导出 / web build pass |
+| Stage 5 生产闭环 | 已完成 | 2026-10-18 12:15 | d7461d4 | success | pytest 76 pass / 生产Trace自动评分 / 失败回流数据集 / 双人盲审与校准导出 / web build pass |
 | Stage 6 企业化与最终交付 | 未开始 | — | — | — | — |
 
 ## 当前阶段任务 (Stage 5)
@@ -48,7 +48,7 @@
 | Stage 2 | 57cbe8a / 75893c5 | success (origin/feat/agent-release-gate-stages) | 2026-10-18 11:10 |
 | Stage 3 | 6cb9c4d / cf68079 | success (origin/feat/agent-release-gate-stages) | 2026-10-18 11:35 |
 | Stage 4 | 716088a / 60b3e6a | success (origin/feat/agent-release-gate-stages) | 2026-10-18 11:55 |
-| Stage 5 | 待填写 | 待填写 | 2026-10-18 12:15 |
+| Stage 5 | d7461d4 | success (origin/feat/agent-release-gate-stages) | 2026-10-18 12:15 |
 
 ## 阻塞与风险
 
