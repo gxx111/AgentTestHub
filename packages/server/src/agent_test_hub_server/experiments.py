@@ -205,9 +205,8 @@ def evaluate_case(
     evaluation_client = None
     if evaluation_team:
         evaluation_client = EvaluationClient(
-            max_calls=evaluation_team.get("max_calls", 30),
-            deadline_seconds=evaluation_team.get("timeout_seconds", 30)
-            * max(1, evaluation_team.get("max_turns", max_turns)),
+            max_calls=max(50, evaluation_team.get("max_calls", 50)),
+            deadline_seconds=max(300.0, float(evaluation_team.get("timeout_seconds", 45) * 8)),
         )
         evaluation_client.bind(event_callback)
     user_member = team_members.get("user_simulator")
@@ -349,6 +348,7 @@ def evaluate_case(
         smol_agent = ToolCallingAgent(
             tools=smol_tools,
             model=model,
+            instructions=agent.get("system_prompt"),
             max_steps=min(max_turns, 4),
         )
 
