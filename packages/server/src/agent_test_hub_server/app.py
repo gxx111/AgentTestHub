@@ -47,9 +47,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=os.environ.get(
         "AGENT_TEST_HUB_CORS_ORIGINS",
-        "http://localhost:3005,http://127.0.0.1:3005,http://localhost:3006,http://127.0.0.1:3006,http://localhost:3007,http://127.0.0.1:3007,http://localhost:3008,http://127.0.0.1:3008",
-    ).split(","),
-    allow_credentials=False,
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3005,http://127.0.0.1:3005,http://localhost:3006,http://127.0.0.1:3006,http://localhost:3007,http://127.0.0.1:3007,http://localhost:3008,http://127.0.0.1:3008",
+    ).split(",") if os.environ.get("AGENT_TEST_HUB_CORS_ORIGINS") != "*" else ["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -359,6 +359,8 @@ def logout(authorization: str | None = Header(default=None)) -> dict[str, str]:
 
 
 @app.get("/health")
+@app.get("/healthz")
+@app.get("/ready")
 def health_check() -> dict[str, str]:
     return {"status": "ok", "service": "AgentTestHub Universal Platform", "version": "0.2.0"}
 
