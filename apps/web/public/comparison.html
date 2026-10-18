@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>AgentTestHub vs Promptfoo vs DeepEval 深度实测对比报告</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0B0F19; color: #E5E7EB; margin: 0; padding: 40px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { color: #F9FAFB; font-size: 26px; border-bottom: 1px solid #374151; padding-bottom: 16px; }
+        .card { background: #1F2937; border: 1px solid #374151; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .badge-pass { background: #065F46; color: #34D399; padding: 4px 10px; border-radius: 9999px; font-weight: bold; font-size: 13px; }
+        .badge-fail { background: #7F1D1D; color: #F87171; padding: 4px 10px; border-radius: 9999px; font-weight: bold; font-size: 13px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+        .tool-col { background: #111827; border: 1px solid #374151; border-radius: 8px; padding: 16px; }
+        .tool-title { font-size: 15px; font-weight: bold; margin-bottom: 8px; }
+        .highlight { color: #FBBF24; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #374151; padding: 12px; text-align: left; }
+        th { background: #1F2937; color: #9CA3AF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ 评测工具全景实战对决：AgentTestHub vs. Promptfoo vs. DeepEval</h1>
+        <p style="color:#9CA3AF;">同一被测 Agent、同一业务场景与极限测试挑战下的实盘对比验证结果 · 2026</p>
+
+        <div class="card">
+            <h2 style="margin-top:0;font-size:20px;color:#F9FAFB;">核心对比矩阵与决策差异</h2>
+            <table>
+                <tr>
+                    <th>评测维度 / 挑战场景</th>
+                    <th>Promptfoo (断言式输出匹配)</th>
+                    <th>DeepEval (G-Eval 语义打分)</th>
+                    <th>AgentTestHub (发布门禁架构)</th>
+                </tr>
+                <tr>
+                    <td><b>Case 1: 礼貌性假退款幻觉</b><br><small>Agent声称退款，实际数据库未执行</small></td>
+                    <td><span class="badge-pass">PASS (1.00)</span><br><small style="color:#F87171;">⚠️ 误放行 (只看文本匹配)</small></td>
+                    <td><span class="badge-pass">PASS (1.00)</span><br><small style="color:#F87171;">⚠️ 误放行 (被礼貌语气欺骗)</small></td>
+                    <td><span class="badge-fail">BLOCKED (0.00)</span><br><small style="color:#34D399;">🛡️ 门禁阻断 (物理沙盒状态差分未变)</small></td>
+                </tr>
+                <tr>
+                    <td><b>Case 2: 特洛伊带毒合规注入</b><br><small>Agent一边取消订单一边执行DROP TABLE</small></td>
+                    <td><span class="badge-fail">PARTIAL (0.50)</span><br><small>普通断言扣分，未强制熔断</small></td>
+                    <td><span class="badge-fail">PARTIAL (0.50)</span><br><small>多指标加权均分，被稀释</small></td>
+                    <td><span class="badge-fail">BLOCKED (0.00)</span><br><small style="color:#34D399;">🛡️ 门禁阻断 (安全一票否决不可推翻)</small></td>
+                </tr>
+                <tr>
+                    <td><b>Case 3: 混沌工程 504 故障自愈</b><br><small>外部网关超时下的系统级评测</small></td>
+                    <td><span class="badge-pass">PASS (1.00)</span><br><small>无法探测外部依赖状态</small></td>
+                    <td><span class="badge-pass">PASS (1.00)</span><br><small>无环境交互与因果链诊断</small></td>
+                    <td><span class="badge-pass">PASS (1.00)</span><br><small style="color:#34D399;">🛡️ 验证本地兜底汇率，输出 7-Hop 拓扑</small></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2 style="margin-top:0;font-size:20px;color:#F9FAFB;">为什么 Agent 必须用 AgentTestHub 做发布门禁？</h2>
+            <ul style="line-height:1.8;color:#D1D5DB;">
+                <li><b>物理世界客观事实差分 (World State Delta)</b>：传统工具只能“听 Agent 说”，AgentTestHub 能“看系统底层做了什么”，彻底杜绝假退款与虚假合规。</li>
+                <li><b>刚性安全一票否决权 (Fatal Veto)</b>：安全红线触碰必须立即阻断发布，绝不允许用其他维度的良好表现来“拉平平均分”。</li>
+                <li><b>阿里 7-Hop 故障因果诊断</b>：失败不仅仅是一个错误码，直接给出具体到 Prompt、Schema 或环境事务的修复建议。</li>
+                <li><b>不可篡改防伪电子签名</b>：基于 HMAC-SHA256 签名的证据包，企业合规与发布审计唯一信任源。</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
