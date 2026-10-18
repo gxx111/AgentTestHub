@@ -8,6 +8,7 @@ from .deterministic import (
     ToolArgEvaluator,
     ToolCallEvaluator,
 )
+from .gui_evaluator import BoundingBox, GUIActionEvaluator, GUIActionExpectation
 from .registry import EvaluatorRegistry
 
 __all__ = [
@@ -21,4 +22,7 @@ __all__ = [
     "BusinessPolicyEvaluator",
     "PIILeakEvaluator",
     "BudgetEvaluator",
+    "BoundingBox",
+    "GUIActionExpectation",
+    "GUIActionEvaluator",
 ]

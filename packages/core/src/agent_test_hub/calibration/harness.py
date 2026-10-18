@@ -65,12 +65,18 @@ class CalibrationHarness:
         kappa = calculate_cohen_kappa(predictions, ground_truths)
         matrix = build_confusion_matrix(predictions, ground_truths)
 
+        source = (
+            cases[0].annotation_source
+            if cases and cases[0].annotation_source
+            else "非人工标签，Kappa 仅作工程基线"
+        )
+
         return CalibrationReport(
             total_cases=len(cases),
             kappa=kappa,
             confusion_matrix=matrix,
             false_pass_rate=matrix.false_pass_rate,
             false_fail_rate=matrix.false_fail_rate,
-            annotation_source="非人工标签，Kappa 仅作工程基线",
+            annotation_source=source,
             details=details,
         )
